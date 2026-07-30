@@ -1,0 +1,24 @@
+{
+  "needs_mcp": true,
+  "notas": "El texto de cada input DEBE coincidir exactamente con una clave de mock_mcp_fixtures.json para que la tool mock devuelva una respuesta determinista.",
+  "cases": [
+    {
+      "id": "P-01-patron-fuerte",
+      "input": {"texto": "hay un bache enorme nuevo en la esquina de Zaragoza y 20 de Noviembre en Del Maestro, ya son muchos aquí", "coordenadas": [24.0291, -104.6293]},
+      "expect_equals": {"similares_encontrados": 14, "posible_causa_estructural": true, "ascenso_sugerido": true},
+      "expect_present": ["nota"]
+    },
+    {
+      "id": "P-02-sin-patron",
+      "input": {"texto": "toda mi cuadra en Guadalupe lleva una semana sin alumbrado, es peligroso caminar de noche", "coordenadas": [24.0102, -104.6485]},
+      "expect_equals": {"similares_encontrados": 1, "posible_causa_estructural": false, "ascenso_sugerido": false},
+      "expect_present": ["nota"]
+    },
+    {
+      "id": "P-03-caso-limite",
+      "input": {"texto": "otra fuga de agua en Villas del Guadiana, ya son muchas en la misma zona este mes", "coordenadas": [24.0574, -104.6825]},
+      "expect_equals": {"similares_encontrados": 8},
+      "expect_present": ["nota", "posible_causa_estructural", "ascenso_sugerido"]
+    }
+  ]
+}

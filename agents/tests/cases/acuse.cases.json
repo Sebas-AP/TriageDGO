@@ -1,0 +1,20 @@
+{
+  "needs_mcp": false,
+  "notas": "No hay 'mensaje correcto' único para texto libre; se valida forma y restricciones, no contenido exacto.",
+  "cases": [
+    {
+      "id": "A-01-basico",
+      "input": {"texto": "hay un bache enorme en mi calle", "ciudadano_id": "cd-a-4823"},
+      "expect_present": ["mensaje"],
+      "expect_max_lines": {"mensaje": 3},
+      "expect_not_contains": {"mensaje": ["DUR-", "http://", "https://"]}
+    },
+    {
+      "id": "A-02-con-categoria",
+      "input": {"texto": "un cable eléctrico está caído y hace chispas", "ciudadano_id": "cd-c-1150", "categoria": "cable_caido"},
+      "expect_present": ["mensaje"],
+      "expect_max_lines": {"mensaje": 3},
+      "expect_not_contains": {"mensaje": ["DUR-", "http://", "https://", "en 24 horas", "mañana mismo"]}
+    }
+  ]
+}

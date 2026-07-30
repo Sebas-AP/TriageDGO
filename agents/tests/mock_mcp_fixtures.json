@@ -1,0 +1,32 @@
+{
+  "_notas": "Respuestas fijas de buscar_similares para pruebas TDD del agente pattern. Desacopla la prueba del prompt de la implementación real (aún no construida) del motor de similitud semántica. Clave = texto exacto del reporte de prueba.",
+  "fixtures": {
+    "hay un bache enorme nuevo en la esquina de Zaragoza y 20 de Noviembre en Del Maestro, ya son muchos aquí": {
+      "similares_encontrados": 14,
+      "radio_km": 0.5,
+      "ventana_dias": 30,
+      "muestras": [
+        {"reporte_id": "H-101", "categoria": "bache", "distancia_km": 0.05},
+        {"reporte_id": "H-102", "categoria": "bache", "distancia_km": 0.09},
+        {"reporte_id": "H-103", "categoria": "bache", "distancia_km": 0.12}
+      ]
+    },
+    "toda mi cuadra en Guadalupe lleva una semana sin alumbrado, es peligroso caminar de noche": {
+      "similares_encontrados": 1,
+      "radio_km": 0.5,
+      "ventana_dias": 30,
+      "muestras": [
+        {"reporte_id": "H-205", "categoria": "alumbrado_apagado", "distancia_km": 0.31}
+      ]
+    },
+    "otra fuga de agua en Villas del Guadiana, ya son muchas en la misma zona este mes": {
+      "similares_encontrados": 8,
+      "radio_km": 0.5,
+      "ventana_dias": 30,
+      "muestras": [
+        {"reporte_id": "H-301", "categoria": "fuga_agua", "distancia_km": 0.15},
+        {"reporte_id": "H-302", "categoria": "fuga_agua", "distancia_km": 0.22}
+      ]
+    }
+  }
+}

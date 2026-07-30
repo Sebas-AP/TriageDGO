@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "debe_escalar": {"type": "boolean"},
+    "director_area": {"type": "string"},
+    "mensaje_escalamiento": {"type": "string"},
+    "motivo": {"type": "string"}
+  },
+  "required": ["debe_escalar", "director_area", "mensaje_escalamiento", "motivo"],
+  "additionalProperties": false
+}

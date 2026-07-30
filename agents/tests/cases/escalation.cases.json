@@ -1,0 +1,30 @@
+{
+  "needs_mcp": false,
+  "notas": "Este agente solo se invoca cuando el Supervisor ya filtró urgencia_final=critica + <500m de escuela; los casos simulan ese contexto ya consolidado.",
+  "cases": [
+    {
+      "id": "S-01-escalar-claro",
+      "input": {
+        "categoria": "cable_caido",
+        "urgencia_final": "critica",
+        "cerca_escuela": true,
+        "escuela_nombre": "Primaria Vicente Guerrero",
+        "resumen": "cable eléctrico caído echando chispas frente a primaria"
+      },
+      "expect_equals": {"debe_escalar": true},
+      "expect_present": ["director_area", "mensaje_escalamiento", "motivo"]
+    },
+    {
+      "id": "S-02-riesgo-seguridad",
+      "input": {
+        "categoria": "riesgo_seguridad",
+        "urgencia_final": "critica",
+        "cerca_escuela": true,
+        "escuela_nombre": "Primaria Benito Juárez",
+        "resumen": "personas armadas rondando escuela primaria"
+      },
+      "expect_equals": {"debe_escalar": true},
+      "expect_present": ["director_area", "mensaje_escalamiento", "motivo"]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "corresponde_a_descripcion": {"type": "boolean"},
+    "severidad": {"type": "string", "enum": ["baja", "media", "alta", "critica"]},
+    "senales_detectadas": {"type": "array", "items": {"type": "string"}},
+    "etiqueta_contexto": {"type": "string"}
+  },
+  "required": ["corresponde_a_descripcion", "severidad", "senales_detectadas", "etiqueta_contexto"],
+  "additionalProperties": false
+}

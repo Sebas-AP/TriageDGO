@@ -1,0 +1,30 @@
+{
+  "needs_mcp": false,
+  "notas": "Casos sintéticos con candidatos controlados por el propio test, para poder verificar que reporte_id_original (si no es null) viene de la lista de entrada.",
+  "cases": [
+    {
+      "id": "D-01-duplicado-claro",
+      "input": {
+        "texto": "sigue el mismo bache enorme en Zaragoza y 20 de Noviembre que reporté ayer",
+        "coordenadas": [24.0291, -104.6293],
+        "candidatos_recientes": [
+          {"reporte_id": "F-01", "texto": "hay un bache enorme nuevo en la esquina de Zaragoza y 20 de Noviembre en Del Maestro", "coordenadas": [24.0291, -104.6293], "horas_desde_reporte": 3}
+        ]
+      },
+      "expect_equals": {"duplicado_detectado": true, "reporte_id_original": "F-01"},
+      "expect_range": {"confianza": [0, 1]},
+      "expect_present": ["justificacion"]
+    },
+    {
+      "id": "D-02-no-duplicado",
+      "input": {
+        "texto": "hay ruido excesivo de una fiesta en la colonia San Marcos",
+        "coordenadas": [24.03, -104.657],
+        "candidatos_recientes": []
+      },
+      "expect_equals": {"duplicado_detectado": false, "reporte_id_original": null},
+      "expect_range": {"confianza": [0, 1]},
+      "expect_present": ["justificacion"]
+    }
+  ]
+}

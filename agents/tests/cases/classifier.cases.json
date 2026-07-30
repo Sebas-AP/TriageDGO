@@ -1,0 +1,66 @@
+{
+  "needs_mcp": false,
+  "notas": "Construido directamente de reportes_frescos.jsonl + reportes_frescos_esperado.json + categorias.json. urgencia_base/area_responsable son lookup determinista sobre categorias.json.",
+  "cases": [
+    {
+      "id": "F-01",
+      "input": {"texto": "hay un bache enorme nuevo en la esquina de Zaragoza y 20 de Noviembre en Del Maestro, ya son muchos aquí", "coordenadas": [24.0291, -104.6293]},
+      "expect_equals": {"categoria": "bache", "urgencia_base": "media", "area_responsable": "Obras Públicas"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-02",
+      "input": {"texto": "está saliendo agua a chorros de una tubería rota en Los Ángeles frente al preescolar", "coordenadas": [24.0178, -104.6544]},
+      "expect_equals": {"categoria": "fuga_agua", "urgencia_base": "alta", "area_responsable": "AMD (Agua)"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-03",
+      "input": {"texto": "un cable eléctrico grueso está caído justo enfrente de la primaria, echando chispas", "coordenadas": [24.0568, -104.682]},
+      "expect_equals": {"categoria": "cable_caido", "urgencia_base": "critica", "area_responsable": "CFE / SP"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-04",
+      "input": {"texto": "toda mi cuadra en Guadalupe lleva una semana sin alumbrado, es peligroso caminar de noche", "coordenadas": [24.0102, -104.6485]},
+      "expect_equals": {"categoria": "alumbrado_apagado", "urgencia_base": "media", "area_responsable": "Servicios Públicos"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-05",
+      "input": {"texto": "los vecinos de San Marcos ponen música altísima todos los fines de semana hasta las 4am", "coordenadas": [24.03, -104.657]},
+      "expect_equals": {"categoria": "ruido_excesivo", "urgencia_base": "baja", "area_responsable": "Reglamentos"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-06",
+      "input": {"texto": "otra fuga de agua en Villas del Guadiana, ya son muchas en la misma zona este mes", "coordenadas": [24.0574, -104.6825]},
+      "expect_equals": {"categoria": "fuga_agua", "urgencia_base": "alta", "area_responsable": "AMD (Agua)"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-07",
+      "input": {"texto": "el semáforo del cruce cerca de la primaria está apagado, ya casi atropellan a un niño", "coordenadas": [24.0272, -104.662]},
+      "expect_equals": {"categoria": "semaforo_apagado", "urgencia_base": "alta", "area_responsable": "Vialidad"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-08",
+      "input": {"texto": "el camión de basura no pasó en dos semanas por Silvestre Dorador, la esquina está llena", "coordenadas": [24.041, -104.6425]},
+      "expect_equals": {"categoria": "basura_acumulada", "urgencia_base": "media", "area_responsable": "Servicios Públicos"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-09",
+      "input": {"texto": "hay un árbol enorme muy inclinado sobre la casa 200 de Morga, se va a caer", "coordenadas": [24.0395, -104.689]},
+      "expect_equals": {"categoria": "arbol_riesgoso", "urgencia_base": "alta", "area_responsable": "Medio Ambiente"},
+      "expect_present": ["resumen", "palabras_clave"]
+    },
+    {
+      "id": "F-10",
+      "input": {"texto": "personas armadas rondando la escuela primaria en Fátima, los papás están asustados", "coordenadas": [24.0, -104.6598]},
+      "expect_equals": {"categoria": "riesgo_seguridad", "urgencia_base": "critica", "area_responsable": "Seguridad Pública"},
+      "expect_present": ["resumen", "palabras_clave"]
+    }
+  ]
+}

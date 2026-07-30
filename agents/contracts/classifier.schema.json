@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "categoria": {
+      "type": "string",
+      "enum": ["bache", "fuga_agua", "alumbrado_apagado", "semaforo_apagado", "basura_acumulada", "cable_caido", "ruido_excesivo", "arbol_riesgoso", "riesgo_seguridad", "drenaje_tapado"]
+    },
+    "urgencia_base": {"type": "string", "enum": ["baja", "media", "alta", "critica"]},
+    "area_responsable": {"type": "string"},
+    "resumen": {"type": "string"},
+    "palabras_clave": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+  },
+  "required": ["categoria", "urgencia_base", "area_responsable", "resumen", "palabras_clave"],
+  "additionalProperties": false
+}

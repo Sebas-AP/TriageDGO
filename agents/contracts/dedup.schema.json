@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "duplicado_detectado": {"type": "boolean"},
+    "reporte_id_original": {"type": ["string", "null"]},
+    "confianza": {"type": "number", "minimum": 0, "maximum": 1},
+    "justificacion": {"type": "string"}
+  },
+  "required": ["duplicado_detectado", "reporte_id_original", "confianza", "justificacion"],
+  "additionalProperties": false
+}

@@ -1,0 +1,18 @@
+{
+  "needs_mcp": false,
+  "notas": "Sin dataset de imágenes real todavía; casos sintéticos validan solo forma/estructura del JSON, no corrección semántica sobre una imagen concreta.",
+  "cases": [
+    {
+      "id": "E-01-severidad-alta",
+      "input": {"descripcion_texto": "bache muy grande y profundo, ya casi tira una llanta", "imagen_ref": "agents/tests/fixtures/placeholder_bache.jpg"},
+      "expect_present": ["corresponde_a_descripcion", "senales_detectadas", "etiqueta_contexto"],
+      "expect_in": {"severidad": ["baja", "media", "alta", "critica"]}
+    },
+    {
+      "id": "E-02-severidad-baja",
+      "input": {"descripcion_texto": "pequeña grieta en la banqueta", "imagen_ref": "agents/tests/fixtures/placeholder_grieta.jpg"},
+      "expect_present": ["corresponde_a_descripcion", "senales_detectadas", "etiqueta_contexto"],
+      "expect_in": {"severidad": ["baja", "media", "alta", "critica"]}
+    }
+  ]
+}
