@@ -1,0 +1,29 @@
+{
+  "name": "triage072-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Capa de negocio del Sistema de Triage 072 — Express + TypeScript + Firebase. Ver arq.md §3.",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.6.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^22.7.0",
+    "typescript": "^5.6.0",
+    "ts-node-dev": "^2.0.0",
+    "vitest": "^2.1.0"
+  }
+}
