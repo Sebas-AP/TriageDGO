@@ -37,6 +37,7 @@ export interface ReportsRepository {
   crear(datos: NuevoReporte): Promise<Reporte>;
   leerPorId(id: string): Promise<Reporte | null>;
   listarPorCiudadano(ciudadanoId: string): Promise<Reporte[]>;
+  listarRecientes(limite: number): Promise<Reporte[]>;
   actualizarEstado(id: string, estado: EstadoReporte, ticketId?: string): Promise<Reporte>;
 }
 
@@ -87,6 +88,11 @@ export function createReportsRepository(db: Firestore): ReportsRepository {
 
     async listarPorCiudadano(ciudadanoId) {
       const snap = await coleccion.where("ciudadanoId", "==", ciudadanoId).get();
+      return snap.docs.map((doc) => toReporte(doc.id, doc.data()));
+    },
+
+    async listarRecientes(limite) {
+      const snap = await coleccion.orderBy("creadoEn", "desc").limit(limite).get();
       return snap.docs.map((doc) => toReporte(doc.id, doc.data()));
     },
 
