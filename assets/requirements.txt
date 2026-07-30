@@ -1,0 +1,15 @@
+# Reto 03 · Triage 072
+# Python 3.11+
+sentence-transformers>=2.7.0
+numpy>=1.26.0
+haversine>=2.8.0
+jsonschema>=4.20.0
+tqdm>=4.66.0
+mcp[cli]>=1.0.0
+
+# Frontend para los jueces (elige UNO — descomenta el que uses)
+# streamlit>=1.30.0     # recomendado: st.columns() para paralelismo visual
+# fastapi>=0.109.0      # si quieres SSE / streaming en vivo
+# uvicorn>=0.27.0       # servidor para fastapi
+# flask>=3.0.0
+# gradio>=4.15.0

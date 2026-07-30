@@ -1,0 +1,106 @@
+{
+  "notas": "Output canónico para autoevaluación. La rúbrica exige ≥8/10 urgencia_final correcta.",
+  "esperado": [
+    {
+      "reporte_id": "F-01",
+      "categoria": "bache",
+      "urgencia_base": "media",
+      "similares_encontrados": ">=10",
+      "posible_causa_estructural": true,
+      "urgencia_final": "alta",
+      "prioridad_final": "P1",
+      "regla_gatillada": "Regla 1 (patrón hotspot Col. del Maestro)",
+      "area": "Obras Públicas"
+    },
+    {
+      "reporte_id": "F-02",
+      "categoria": "fuga_agua",
+      "urgencia_base": "alta",
+      "cerca_escuela": true,
+      "urgencia_final": "critica",
+      "prioridad_final": "P0",
+      "regla_gatillada": "Regla 2 (fuga + <500m escuela)",
+      "area": "AMD (Agua)"
+    },
+    {
+      "reporte_id": "F-03",
+      "categoria": "cable_caido",
+      "urgencia_base": "critica",
+      "cerca_escuela": true,
+      "urgencia_final": "critica",
+      "prioridad_final": "P0",
+      "regla_gatillada": "Regla 2 (cable + escuela)",
+      "area": "CFE / SP"
+    },
+    {
+      "reporte_id": "F-04",
+      "categoria": "alumbrado_apagado",
+      "urgencia_base": "media",
+      "similares_encontrados": "<10",
+      "cerca_escuela": false,
+      "urgencia_final": "media",
+      "prioridad_final": "P2",
+      "regla_gatillada": "(ninguna)",
+      "area": "Servicios Públicos"
+    },
+    {
+      "reporte_id": "F-05",
+      "categoria": "ruido_excesivo",
+      "urgencia_base": "baja",
+      "urgencia_final": "baja",
+      "prioridad_final": "P3",
+      "regla_gatillada": "(ninguna)",
+      "area": "Reglamentos"
+    },
+    {
+      "reporte_id": "F-06",
+      "categoria": "fuga_agua",
+      "urgencia_base": "alta",
+      "similares_encontrados": ">=6",
+      "posible_causa_estructural": true,
+      "urgencia_final": "alta",
+      "prioridad_final": "P1",
+      "regla_gatillada": "Regla 1 (patrón fugas Villas Guadiana). Nota: no aplica escalado a crítica porque no hay escuela cercana",
+      "area": "AMD (Agua)"
+    },
+    {
+      "reporte_id": "F-07",
+      "categoria": "semaforo_apagado",
+      "urgencia_base": "alta",
+      "cerca_escuela": true,
+      "urgencia_final": "critica",
+      "prioridad_final": "P0",
+      "regla_gatillada": "Regla 2 (semáforo + escuela)",
+      "area": "Vialidad"
+    },
+    {
+      "reporte_id": "F-08",
+      "categoria": "basura_acumulada",
+      "urgencia_base": "media",
+      "urgencia_final": "media",
+      "prioridad_final": "P2",
+      "regla_gatillada": "(ninguna)",
+      "area": "Servicios Públicos"
+    },
+    {
+      "reporte_id": "F-09",
+      "categoria": "arbol_riesgoso",
+      "urgencia_base": "alta",
+      "cerca_escuela": false,
+      "urgencia_final": "alta",
+      "prioridad_final": "P1",
+      "regla_gatillada": "(ninguna)",
+      "area": "Medio Ambiente"
+    },
+    {
+      "reporte_id": "F-10",
+      "categoria": "riesgo_seguridad",
+      "urgencia_base": "critica",
+      "cerca_escuela": true,
+      "urgencia_final": "critica",
+      "prioridad_final": "P0",
+      "regla_gatillada": "Regla 2 (seguridad + escuela)",
+      "area": "Seguridad Pública"
+    }
+  ]
+}

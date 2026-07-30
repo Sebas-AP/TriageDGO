@@ -1,0 +1,126 @@
+{
+  "notas": "Taxonomía canónica de categorías 072. Usar como enumeración estricta en structured outputs.",
+  "categorias": [
+    {
+      "id": "bache",
+      "label": "Bache en vialidad",
+      "area_responsable": "Obras Públicas",
+      "urgencia_base": "media",
+      "keywords": [
+        "bache",
+        "hoyo",
+        "socavón",
+        "hundimiento"
+      ]
+    },
+    {
+      "id": "fuga_agua",
+      "label": "Fuga de agua potable",
+      "area_responsable": "AMD (Agua)",
+      "urgencia_base": "alta",
+      "keywords": [
+        "fuga",
+        "agua",
+        "tubería",
+        "brote"
+      ]
+    },
+    {
+      "id": "alumbrado_apagado",
+      "label": "Alumbrado público apagado",
+      "area_responsable": "Servicios Públicos",
+      "urgencia_base": "media",
+      "keywords": [
+        "luz",
+        "farol",
+        "alumbrado",
+        "poste",
+        "oscuro"
+      ]
+    },
+    {
+      "id": "semaforo_apagado",
+      "label": "Semáforo apagado o dañado",
+      "area_responsable": "Vialidad",
+      "urgencia_base": "alta",
+      "keywords": [
+        "semáforo",
+        "semaforo",
+        "cruce",
+        "peligro"
+      ]
+    },
+    {
+      "id": "basura_acumulada",
+      "label": "Basura acumulada",
+      "area_responsable": "Servicios Públicos",
+      "urgencia_base": "media",
+      "keywords": [
+        "basura",
+        "acumulada",
+        "esquina",
+        "cochera"
+      ]
+    },
+    {
+      "id": "cable_caido",
+      "label": "Cable eléctrico caído",
+      "area_responsable": "CFE / SP",
+      "urgencia_base": "critica",
+      "keywords": [
+        "cable",
+        "poste caído",
+        "electricidad",
+        "chispa"
+      ]
+    },
+    {
+      "id": "ruido_excesivo",
+      "label": "Ruido excesivo",
+      "area_responsable": "Reglamentos",
+      "urgencia_base": "baja",
+      "keywords": [
+        "ruido",
+        "fiesta",
+        "escándalo",
+        "bocinas"
+      ]
+    },
+    {
+      "id": "arbol_riesgoso",
+      "label": "Árbol con riesgo estructural",
+      "area_responsable": "Medio Ambiente",
+      "urgencia_base": "alta",
+      "keywords": [
+        "árbol",
+        "rama",
+        "cae",
+        "peligro"
+      ]
+    },
+    {
+      "id": "riesgo_seguridad",
+      "label": "Riesgo de seguridad ciudadana",
+      "area_responsable": "Seguridad Pública",
+      "urgencia_base": "critica",
+      "keywords": [
+        "asaltos",
+        "sospechoso",
+        "riesgo",
+        "banda"
+      ]
+    },
+    {
+      "id": "drenaje_tapado",
+      "label": "Drenaje tapado",
+      "area_responsable": "AMD (Drenaje)",
+      "urgencia_base": "media",
+      "keywords": [
+        "drenaje",
+        "coladera",
+        "tapado",
+        "olor"
+      ]
+    }
+  ]
+}

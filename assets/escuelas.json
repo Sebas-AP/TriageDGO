@@ -1,0 +1,275 @@
+{
+  "notas": "30 escuelas de Durango capital. Usadas por la Regla 2 del supervisor: proximidad <500m + categoría {fuga_agua, semaforo_apagado, cable_caido, riesgo_seguridad} → urgencia crítica.",
+  "escuelas": [
+    {
+      "id": "ESC-001",
+      "nombre": "Primaria Miguel Hidalgo",
+      "colonia": "Zona Centro",
+      "coordenadas": [
+        24.02452,
+        -104.671
+      ]
+    },
+    {
+      "id": "ESC-002",
+      "nombre": "Secundaria Federal 1",
+      "colonia": "Guadalupe",
+      "coordenadas": [
+        24.0082,
+        -104.65021
+      ]
+    },
+    {
+      "id": "ESC-003",
+      "nombre": "CBTIS 26",
+      "colonia": "Del Maestro",
+      "coordenadas": [
+        24.03089,
+        -104.62759
+      ]
+    },
+    {
+      "id": "ESC-004",
+      "nombre": "Primaria Benito Juárez",
+      "colonia": "Fátima",
+      "coordenadas": [
+        24.00314,
+        -104.6633
+      ]
+    },
+    {
+      "id": "ESC-005",
+      "nombre": "Preescolar Frida Kahlo",
+      "colonia": "Los Ángeles",
+      "coordenadas": [
+        24.01738,
+        -104.65776
+      ]
+    },
+    {
+      "id": "ESC-006",
+      "nombre": "CETIS 89",
+      "colonia": "Tapias",
+      "coordenadas": [
+        24.04275,
+        -104.60996
+      ]
+    },
+    {
+      "id": "ESC-007",
+      "nombre": "Primaria Vicente Guerrero",
+      "colonia": "Villas del Guadiana",
+      "coordenadas": [
+        24.05321,
+        -104.68441
+      ]
+    },
+    {
+      "id": "ESC-008",
+      "nombre": "Secundaria General 5",
+      "colonia": "Fidel Velázquez",
+      "coordenadas": [
+        23.9982,
+        -104.63464
+      ]
+    },
+    {
+      "id": "ESC-009",
+      "nombre": "Primaria Justo Sierra",
+      "colonia": "Morga",
+      "coordenadas": [
+        24.03776,
+        -104.68829
+      ]
+    },
+    {
+      "id": "ESC-010",
+      "nombre": "Preescolar Estefanía Castañeda",
+      "colonia": "San Marcos",
+      "coordenadas": [
+        24.03498,
+        -104.66095
+      ]
+    },
+    {
+      "id": "ESC-011",
+      "nombre": "Primaria Emiliano Zapata",
+      "colonia": "Ciénega",
+      "coordenadas": [
+        23.99145,
+        -104.65241
+      ]
+    },
+    {
+      "id": "ESC-012",
+      "nombre": "CECyTED Durango",
+      "colonia": "Real de Minas",
+      "coordenadas": [
+        24.01172,
+        -104.67376
+      ]
+    },
+    {
+      "id": "ESC-013",
+      "nombre": "Primaria Ignacio Zaragoza",
+      "colonia": "Silvestre Dorador",
+      "coordenadas": [
+        24.04466,
+        -104.64331
+      ]
+    },
+    {
+      "id": "ESC-014",
+      "nombre": "Preescolar Rosaura Zapata",
+      "colonia": "20 de Noviembre",
+      "coordenadas": [
+        24.02374,
+        -104.66523
+      ]
+    },
+    {
+      "id": "ESC-015",
+      "nombre": "Secundaria Técnica 15",
+      "colonia": "Insurgentes",
+      "coordenadas": [
+        24.01678,
+        -104.63817
+      ]
+    },
+    {
+      "id": "ESC-016",
+      "nombre": "Primaria Guadalupe Victoria",
+      "colonia": "Zona Centro",
+      "coordenadas": [
+        24.02586,
+        -104.66536
+      ]
+    },
+    {
+      "id": "ESC-017",
+      "nombre": "Preescolar María Montessori",
+      "colonia": "Guadalupe",
+      "coordenadas": [
+        24.01029,
+        -104.64422
+      ]
+    },
+    {
+      "id": "ESC-018",
+      "nombre": "Secundaria Federal 3",
+      "colonia": "Del Maestro",
+      "coordenadas": [
+        24.02803,
+        -104.62858
+      ]
+    },
+    {
+      "id": "ESC-019",
+      "nombre": "Primaria Cuauhtémoc",
+      "colonia": "Fátima",
+      "coordenadas": [
+        24.00264,
+        -104.65905
+      ]
+    },
+    {
+      "id": "ESC-020",
+      "nombre": "CBTIS 4",
+      "colonia": "Los Ángeles",
+      "coordenadas": [
+        24.02089,
+        -104.65338
+      ]
+    },
+    {
+      "id": "ESC-021",
+      "nombre": "Preescolar Federico Froebel",
+      "colonia": "Tapias",
+      "coordenadas": [
+        24.04664,
+        -104.61363
+      ]
+    },
+    {
+      "id": "ESC-022",
+      "nombre": "Primaria Francisco Villa",
+      "colonia": "Villas del Guadiana",
+      "coordenadas": [
+        24.05482,
+        -104.68368
+      ]
+    },
+    {
+      "id": "ESC-023",
+      "nombre": "Secundaria General 7",
+      "colonia": "Fidel Velázquez",
+      "coordenadas": [
+        23.99364,
+        -104.63714
+      ]
+    },
+    {
+      "id": "ESC-024",
+      "nombre": "Primaria Josefa Ortiz",
+      "colonia": "Morga",
+      "coordenadas": [
+        24.03681,
+        -104.69078
+      ]
+    },
+    {
+      "id": "ESC-025",
+      "nombre": "CETIS 100",
+      "colonia": "San Marcos",
+      "coordenadas": [
+        24.03359,
+        -104.65808
+      ]
+    },
+    {
+      "id": "ESC-026",
+      "nombre": "Primaria Amado Nervo",
+      "colonia": "Ciénega",
+      "coordenadas": [
+        23.98796,
+        -104.65632
+      ]
+    },
+    {
+      "id": "ESC-027",
+      "nombre": "Preescolar Kinder Colibrí",
+      "colonia": "Real de Minas",
+      "coordenadas": [
+        24.01114,
+        -104.66751
+      ]
+    },
+    {
+      "id": "ESC-028",
+      "nombre": "Secundaria Técnica 22",
+      "colonia": "Silvestre Dorador",
+      "coordenadas": [
+        24.04218,
+        -104.64113
+      ]
+    },
+    {
+      "id": "ESC-029",
+      "nombre": "Primaria Sor Juana",
+      "colonia": "20 de Noviembre",
+      "coordenadas": [
+        24.02437,
+        -104.66017
+      ]
+    },
+    {
+      "id": "ESC-030",
+      "nombre": "Preescolar Isabel Solís",
+      "colonia": "Insurgentes",
+      "coordenadas": [
+        24.01131,
+        -104.63996
+      ]
+    }
+  ]
+}
