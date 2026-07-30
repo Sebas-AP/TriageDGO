@@ -54,6 +54,23 @@ auditorías de dependencias, `Edit`/`Write` para parchear) para cubrir:
    Si el repo tiene runner de tests, ejecútalo con `Bash` para confirmar
    antes de reportar éxito — no lo asumas.
 
+## Flujo git (git flow)
+
+Este repo usa git flow (`main`/`develop` + prefijos `feature/`, `bugfix/`,
+`hotfix/`, `release/`). No escribas el parche directo sobre `main` o
+`develop`: antes de tocar cualquier archivo, revisa la rama actual
+(`git branch --show-current`).
+
+- Si estás en `feature/*`, `bugfix/*`, `hotfix/*` o `release/*` → sigue
+  normalmente ahí.
+- Si estás en `main` o `develop` → no abras una rama tú mismo (no conoces el
+  nombre de la tarea que la originó); repórtalo en "Reglas de comportamiento"
+  como bloqueante y no apliques el parche hasta que exista una rama.
+
+No comitees, hagas merge ni push tú mismo — entrega el parche y el test de
+verificación para que quien te invocó (o el agente dueño de la rama) los
+revise y comitee.
+
 ## Formato de reporte
 
 1. **Resumen de la auditoría** — total de hallazgos por severidad.

@@ -68,9 +68,20 @@ python3 agents/tests/integration_test.py classifier pattern acuse
 ```
 Si agregaste `evidence`, `dedup` o `escalation` a la mezcla, inclúyelos en la lista de argumentos. Esta prueba no vuelve a validar corrección caso por caso — valida que las 3-6 sesiones `claude -p` corran concurrentemente sin bloquearse y que cada una devuelva JSON válido según su contrato. Si un agente falla aquí pero pasaba el harness individual, sospecha de un problema de timeout/concurrencia, no de lógica del prompt.
 
+## Flujo git (git flow)
+
+Este repo usa git flow (`main`/`develop` + prefijos `feature/`, `bugfix/`, `hotfix/`, `release/`). Nunca trabajes ni comitees directo sobre `main` o `develop`.
+
+1. Antes de tocar `agents/prompts/*.md` o `agents/tests/cases/*.json`, revisa la rama actual: `git branch --show-current`.
+2. Si estás en `main` o `develop`, abre una rama antes de escribir nada: `git flow feature start agente-<nombre>` (o `git flow bugfix start agente-<nombre>` si estás corrigiendo un agente ya construido en vez de construirlo desde cero).
+3. Si ya estás en una rama `feature/*` o `bugfix/*` para este mismo trabajo, sigue ahí — no abras una segunda rama.
+4. Comitea al cerrar cada ciclo (harness en verde, o al menos al final de tu reporte) con un mensaje descriptivo en imperativo. No uses `git commit --amend`.
+5. No corras `git flow feature finish`, no hagas merge ni push. Deja la rama lista con todo comiteado; el merge a `develop` lo decide el usuario.
+6. Reporta el nombre exacto de la rama en tu reporte final.
+
 ## Reporte final (por cada agente que trabajes)
 
-Resume: agente, iteraciones usadas, pass rate final, y si pasó la prueba de integración. Si algo quedó sin resolver o si tuviste que añadir casos nuevos al checklist, dilo explícitamente — no lo omitas.
+Resume: rama de trabajo, agente, iteraciones usadas, pass rate final, y si pasó la prueba de integración. Si algo quedó sin resolver o si tuviste que añadir casos nuevos al checklist, dilo explícitamente — no lo omitas.
 
 ## Reglas duras
 

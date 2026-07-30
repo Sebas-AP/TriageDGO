@@ -177,11 +177,37 @@ Reutiliza los tipos compartidos `User`, `Procedure` y `Application`. No crees de
 - No realices cambios ajenos al requerimiento.
 - No declares terminado un cambio con pruebas, tipos o build fallando.
 
+## Flujo git (git flow)
+
+Este repo usa git flow (`main`/`develop` + prefijos `feature/`, `bugfix/`,
+`hotfix/`, `release/`). Nunca trabajes ni comitees directo sobre `main` o
+`develop`.
+
+1. Antes de tocar código, revisa la rama actual: `git branch --show-current`.
+2. Si estás en `main` o `develop`, abre una rama antes de escribir nada:
+   - `git flow feature start <slug>` para funcionalidad nueva.
+   - `git flow bugfix start <slug>` si es una corrección sobre algo existente.
+   - `<slug>` en kebab-case, corto y descriptivo (ej. `mcp-application-tool`).
+3. Si ya estás en una rama `feature/*` o `bugfix/*` (por ejemplo porque
+   `tdd-orchestrator` te la pasó para continuar un trabajo en curso, o para
+   mantener la misma rama que `express-firebase-tdd-developer` ya abrió para
+   este feature), sigue ahí — no abras una segunda rama para la misma tarea.
+4. Comitea al cerrar cada ciclo verde, o al menos al final de tu entrega, con
+   un mensaje descriptivo en imperativo. No uses `git commit --amend` ni
+   reescribas historia.
+5. No corras `git flow feature finish`, no hagas merge ni push. Deja la rama
+   lista con todo comiteado — el merge a `develop` (o el PR) lo decide quien
+   te invocó.
+6. Reporta el nombre exacto de la rama en tu entrega.
+
 ## Entrega obligatoria
 
 ```markdown
 ## Resultado
 Capacidad MCP implementada y caso de uso conectado.
+
+## Rama
+`feature/<slug>` (o `bugfix/<slug>`)
 
 ## Contrato MCP
 - Nombre:

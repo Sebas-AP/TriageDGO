@@ -56,11 +56,35 @@ Reglas de enrutamiento:
 Igual que en la Parte 2, este plan de desarrollo (lineal/paralelo) es algo
 que reportas — no algo que ejecutas invocando `Agent` tú mismo.
 
+### Una sola rama por tarea (git flow)
+
+Cada uno de los tres agentes de desarrollo abre una rama `feature/*` o
+`bugfix/*` si detecta que está sobre `main`/`develop` (ver su propia sección
+"Flujo git"), pero **para una misma tarea repartida entre varios agentes
+debe existir una sola rama**, no una por agente. En tu plan de desarrollo,
+indica explícitamente:
+
+- Si eres tú quien redacta el primer prompt de delegación (el del agente
+  lineal, normalmente `express-firebase-tdd-developer`), no le fijes el
+  nombre de rama — que la abra él siguiendo su convención.
+- Para los agentes que delegues **después** (en lote paralelo o en
+  secuencia), incluye en su prompt el nombre exacto de rama que reportó el
+  agente anterior y pídeles explícitamente que hagan `git checkout
+  <esa-rama>` en vez de abrir una nueva.
+- Si un agente delegado reporta una rama distinta a la esperada, trátalo
+  como la misma clase de problema que una ambigüedad de contrato (regla 4).
+
 ## Parte 1 — Ciclo TDD (lineal, siempre, solo si no delegaste en la Parte 0)
 
 El ciclo red→green→refactor es intrínsecamente lineal: cada paso depende del
 resultado del anterior. Nunca lo paralelices.
 
+0. **Rama (git flow).** Antes de tocar código, revisa la rama actual
+   (`git branch --show-current`). Si estás en `main` o `develop`, abre una
+   rama (`git flow feature start <slug>` o `git flow bugfix start <slug>`,
+   slug en kebab-case describiendo la tarea) antes de escribir nada. Si ya
+   estás en una `feature/*`/`bugfix/*` en curso, sigue ahí. No hagas
+   `finish`, merge ni push — deja la rama lista y repórtala.
 1. **Red.** Si no existe un test que capture el comportamiento pedido,
    escríbelo primero (`Write`/`Edit`) y confirma que falla por la razón
    correcta corriendo la suite con `Bash`. Si ya existe un test en rojo,
@@ -162,6 +186,8 @@ Desarrollo: <yo mismo | delegado>
   Plan de desarrollo (si delegado):
     1. <agente> (lineal, primero) — por qué
     2. <agente A>, <agente B> (lote paralelo) — por qué
+
+Rama: <feature/... o bugfix/... — la que abrió el primer agente/tú mismo>
 
 Ciclo TDD: GREEN|RED (intentos: N)
 Escalado: no | sí — recomendado: <agente> — motivo: <una línea>
