@@ -6,8 +6,6 @@ Expone dos herramientas:
 
 La API key se lee exclusivamente de GOOGLE_MAPS_API_KEY.
 """
-from __future__ import annotations
-
 import json
 import os
 from dataclasses import asdict, dataclass
