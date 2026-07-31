@@ -1,0 +1,18 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && request.auth.token.rol == 'admin'; }
+    function owner(reporteId) {
+      return signedIn() && firestore.exists(/databases/(default)/documents/reportes/$(reporteId))
+        && firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.ciudadanoId == request.auth.uid;
+    }
+    match /evidencias/{reporteId}/{fileName} {
+      allow read: if admin() || owner(reporteId);
+      allow write: if admin() || owner(reporteId);
+    }
+    match /audio/{reporteId}/{fileName} {
+      allow read, write: if admin();
+    }
+  }
+}

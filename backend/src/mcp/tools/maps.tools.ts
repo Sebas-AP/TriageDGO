@@ -1,0 +1,2 @@
+import type { CatalogPlace, MapsClient } from "../clients/maps.client";
+export class MapsTools { constructor(private readonly client: MapsClient) {} geocodificar(direccion: string) { return this.client.geocodificar(direccion); } distancia(origen: [number, number], destino: [number, number]) { return this.client.distancia(origen, destino); } lugaresCercanos(lat: number, lon: number, tipo: CatalogPlace["tipo"], radioMetros = 500) { return this.client.lugaresCercanos(lat, lon, tipo, radioMetros); } }

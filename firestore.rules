@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && request.auth.token.rol == 'admin'; }
+    function owner(userId) { return signedIn() && request.auth.uid == userId; }
+
+    match /reportes/{reporteId} {
+      allow create: if owner(request.resource.data.ciudadanoId);
+      allow read: if admin() || owner(resource.data.ciudadanoId);
+      allow update: if admin();
+      allow delete: if false;
+    }
+    match /tickets/{ticketId} { allow read, write: if admin(); }
+    match /usuarios/{userId} {
+      allow read: if admin() || owner(userId);
+      allow create: if owner(userId);
+      allow update, delete: if admin();
+    }
+    match /predial/{document=**} { allow read, write: if false; }
+    match /escuelas/{document=**} { allow read, write: if false; }
+    match /lugares_publicos/{document=**} { allow read, write: if false; }
+    match /log_agentes/{document=**} { allow read, write: if admin(); }
+  }
+}
