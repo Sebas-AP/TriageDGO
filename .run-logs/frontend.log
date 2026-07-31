@@ -1,0 +1,9 @@
+
+> triage072-frontend@0.1.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v5.4.21  ready in 200 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.11.0.118:5173/

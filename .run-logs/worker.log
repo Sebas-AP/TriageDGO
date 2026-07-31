@@ -1,0 +1,5 @@
+
+> triage072-backend@0.1.0 worker
+> ts-node-dev --respawn --transpile-only src/worker.ts
+
+[INFO] 09:34:36 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
