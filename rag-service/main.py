@@ -96,7 +96,7 @@ class Vectorizer:
                 from sentence_transformers import SentenceTransformer
                 self._model = SentenceTransformer(os.getenv("RAG_MODEL", "all-MiniLM-L6-v2"))
             vector = np.asarray(self._model.encode(text), dtype=np.float32)
-        except ImportError:
+        except (ImportError, OSError, RuntimeError):
             vocabulary = sorted(tokens(text))[:64]
             vector = np.zeros(64, dtype=np.float32)
             for token in vocabulary:
