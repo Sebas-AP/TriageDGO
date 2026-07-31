@@ -135,6 +135,11 @@ if ! python3 -c "import uvicorn" >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! python3 -c "from mcp.server.fastmcp import FastMCP" >/dev/null 2>&1; then
+  echo "❌ Faltan dependencias MCP: cd services/mcp-reportes && python3 -m pip install -r requirements.txt"
+  exit 1
+fi
+
 if [[ ! -f "$RAG_DIR/requirements.txt" ]]; then
   echo "❌ No encontré rag-service/requirements.txt"
   exit 1

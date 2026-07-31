@@ -86,6 +86,11 @@ export class Supervisor {
     ]);
     const settled = await Promise.allSettled(tasks.map((task) => task.promise));
     await Promise.all(settled.map((entry, i) => this.log(report, tasks[i], entry)));
+    report.agent_statuses = {
+      classifier: settled[0]?.status === "fulfilled" ? "done" : "error",
+      pattern: settled[1]?.status === "fulfilled" ? "done" : "error",
+      acuse: settled[2]?.status === "fulfilled" ? "done" : "error",
+    };
     const failed = settled.some((entry) => entry.status === "rejected");
     const value = <T>(i: number): T | undefined => settled[i]?.status === "fulfilled" ? settled[i].value as T : undefined;
     const classifier = value<AgentOutputs["classifier"]>(0) ?? fallback;
@@ -99,7 +104,7 @@ export class Supervisor {
     const school = await this.geo.schoolNear(report.coordenadas);
     const modifier = !school && ((await this.store.isRecurrent(report)) || Boolean(report.vulnerable) || await this.geo.weatherAggravates(report));
     const arbitration = classifier.categoria === "revision_manual" ? { urgencia_final: "alta" as Urgency, prioridad_final: "P1" as const, regla_gatillada: null } : arbitrate({ categoria: classifier.categoria, urgencia: classifier.urgencia_base, similares: pattern.similares_encontrados, causaEstructural: pattern.posible_causa_estructural, cercaEscuela: Boolean(school), modifier });
-    const ticket = await this.store.createTicket({ reporte_id: report.reporte_id, categoria: classifier.categoria, area_responsable: classifier.area_responsable, ...arbitration, revision_manual: failed || classifier.categoria === "revision_manual", acuse_enviado: false, duplicados: 0, atencion_preferente: false, modificadores: modifier ? ["modificador"] : [] });
+    const ticket = await this.store.createTicket({ reporte_id: report.reporte_id, categoria: classifier.categoria, area_responsable: canonicalArea(classifier.categoria), ...arbitration, revision_manual: failed || classifier.categoria === "revision_manual", acuse_enviado: false, duplicados: 0, atencion_preferente: false, modificadores: modifier ? ["modificador"] : [], pattern_detected: pattern.posible_causa_estructural, similares_encontrados: pattern.similares_encontrados, patron_nota: pattern.nota });
     if (acuse) { await this.sendAcuse(report.ciudadano_id, acuse.mensaje, ticket.ticket_id); ticket.acuse_enviado = true; }
     if (school && ticket.urgencia_final === "critica") { const escalation = await this.agents.escalation(ticket, school); ticket.escalado = escalation.debe_escalar; }
     report.estado = ticket.revision_manual ? "revision_manual" : "completado";
@@ -107,6 +112,10 @@ export class Supervisor {
     report.categoria = ticket.categoria;
     report.area_responsable = canonicalArea(ticket.categoria);
     report.prioridad = ticket.prioridad_final;
+    report.pattern_detected = ticket.pattern_detected;
+    report.similares_encontrados = ticket.similares_encontrados;
+    report.patron_nota = ticket.patron_nota;
+    report.acuse_enviado = ticket.acuse_enviado;
     return { ticket };
   }
   private async start(report: Report, agent: string, operation: (trace: AgentTraceObserver) => Promise<unknown>): Promise<StartedAgentTask> {

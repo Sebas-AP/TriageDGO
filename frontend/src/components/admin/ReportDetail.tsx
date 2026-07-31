@@ -154,7 +154,7 @@ export function ReportDetail({
             </section>
           )}
 
-          <section className="case-section map-case-section"><div className="section-title"><h3>Ubicación</h3><span>{report.similarReports.length} similares cercanos</span></div><ReportMap report={report} /></section>
+          <section className="case-section map-case-section"><div className="section-title"><h3>Ubicación</h3><span>{report.similarCount ?? report.similarReports.length} similares cercanos</span></div><ReportMap report={report} /></section>
         </div>
       )}
 

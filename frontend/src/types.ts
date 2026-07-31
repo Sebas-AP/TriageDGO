@@ -112,6 +112,7 @@ export interface ReportRecord {
   agents: Record<AgentName, AgentProgress>;
   ticket?: Ticket;
   similarReports: SimilarReport[];
+  similarCount?: number;
   followUps: FollowUp[];
   notes: AdministrativeNote[];
   auditLog: AuditEvent[];
