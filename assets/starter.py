@@ -6,7 +6,7 @@ Objetivo: supervisor con delegación paralela a 3 subagentes (clasificador,
 detector de patrones, escritor de acuse) + servidor MCP con 3 tools.
 
 Este archivo te da:
-  - claude_p() con detección de CLI y stdin=DEVNULL
+  - codex_exec() con detección de CLI y salida estructurada
   - Helper para paralelismo con asyncio + subprocess
   - Contratos JSON de los 4 tipos de mensaje
   - Función haversine (distancia entre coords)
@@ -25,6 +25,7 @@ import math
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -42,40 +43,46 @@ LOG_PATH = ROOT / "log_agentes.jsonl"
 # CLI helper
 # ─────────────────────────────────────────────────────────────
 
-def _find_claude() -> str:
-    exe = shutil.which("claude")
+def _find_codex() -> str:
+    exe = shutil.which("codex")
     if exe:
         return exe
     for c in [
-        Path.home() / ".local" / "bin" / "claude",
-        Path("/opt/homebrew/bin/claude"),
-        Path("/usr/local/bin/claude"),
-        Path.home() / ".npm-global" / "bin" / "claude",
+        Path.home() / ".local" / "bin" / "codex",
+        Path("/opt/homebrew/bin/codex"),
+        Path("/usr/local/bin/codex"),
+        Path.home() / ".npm-global" / "bin" / "codex",
     ]:
         if c.exists() and os.access(c, os.X_OK):
             return str(c)
-    raise RuntimeError("No encontré `claude`.")
+    raise RuntimeError("No encontré `codex`.")
 
 
-CLAUDE_BIN = _find_claude()
+CODEX_BIN = _find_codex()
+CODEX_MODEL = os.getenv("CODEX_MODEL", "gpt-5.6-luna")
 
 
-def claude_p(prompt: str, system: str | None = None, schema: dict | None = None, timeout: int = 120) -> Any:
-    cmd = [CLAUDE_BIN, "-p"]
-    if system:
-        cmd += ["--append-system-prompt", system]
-    if schema:
-        cmd += ["--json-schema", json.dumps(schema)]
-    cmd.append(prompt)
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
-    if r.returncode != 0:
-        raise RuntimeError(f"claude -p falló ({r.returncode}): {r.stderr[:500]}")
-    out = r.stdout.strip()
-    return json.loads(out) if schema else out
+def codex_exec(prompt: str, system: str | None = None, schema: dict | None = None, timeout: int = 120) -> Any:
+    """Ejecuta Codex sin interacción; si hay schema, devuelve JSON validado por CLI."""
+    full_prompt = f"{system or ''}\n\n{prompt}".strip()
+    with tempfile.TemporaryDirectory(prefix="triage-codex-") as temp_dir:
+        temp_path = Path(temp_dir)
+        output_path = temp_path / "last-message.json"
+        cmd = [CODEX_BIN, "exec", "--ephemeral", "--sandbox", "read-only", "--model", CODEX_MODEL, "--output-last-message", str(output_path)]
+        if schema:
+            schema_path = temp_path / "schema.json"
+            schema_path.write_text(json.dumps(schema), encoding="utf-8")
+            cmd += ["--output-schema", str(schema_path)]
+        cmd.append(full_prompt)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
+        if r.returncode != 0:
+            raise RuntimeError(f"codex exec falló ({r.returncode}): {r.stderr[:500]}")
+        out = output_path.read_text(encoding="utf-8").strip()
+        return json.loads(out) if schema else out
 
 
-async def claude_p_async(*args, **kwargs) -> Any:
-    return await asyncio.get_event_loop().run_in_executor(None, lambda: claude_p(*args, **kwargs))
+async def codex_exec_async(*args, **kwargs) -> Any:
+    return await asyncio.get_event_loop().run_in_executor(None, lambda: codex_exec(*args, **kwargs))
 
 
 # ─────────────────────────────────────────────────────────────

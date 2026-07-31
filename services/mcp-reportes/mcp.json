@@ -1,0 +1,1 @@
+{"mcpServers":{"reportes":{"command":"python3","args":["../services/mcp-reportes/server.py"]}}}

@@ -1,8 +1,9 @@
 // Entry point del monolito Express (ver arq.md §3). Lógica de negocio: fase TDD (siguiente checkpoint).
-import express from "express";
+import "./env";
+import "dotenv/config";
+import { createApp } from "./app";
 
-const app = express();
-app.use(express.json());
+const app = createApp();
 
 const PORT = process.env.PORT ?? 3000;
 app.listen(PORT, () => {

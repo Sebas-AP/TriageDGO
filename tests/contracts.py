@@ -86,8 +86,8 @@ CONTRACTS: dict[str, type[BaseModel]] = {
 }
 
 # Ejemplos válidos por agente — usados por test_contracts.py (round-trip contra
-# el JSON Schema) y por el fixture mock_claude_p (conftest.py) como respuesta
-# canned de cada agente al probar la orquestación sin invocar `claude -p` real.
+# el JSON Schema) y por el fixture mock_codex_exec (conftest.py) como respuesta
+# canned de cada agente al probar la orquestación sin invocar Codex real.
 EXAMPLE_OUTPUTS: dict[str, dict] = {
     "classifier": {
         "categoria": "bache",

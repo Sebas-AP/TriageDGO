@@ -1,5 +1,9 @@
 # Sistema de Triage Inteligente 072
 
+> Nota operativa: los ejemplos históricos de Claude Code en este documento no
+> son el runner vigente. El backend usa `codex exec` con `gpt-5.6-luna`; la
+> configuración actual está en `.env.example` y `backend/src/business/agents/cli.gateway.ts`.
+
 Triage de reportes ciudadanos (bache, fuga de agua, cable caído, etc.)
 mediante 6 agentes de razonamiento (`classifier`, `pattern`, `acuse`,
 `evidence`, `dedup`, `escalation`) orquestados en paralelo por un

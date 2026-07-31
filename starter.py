@@ -1,4 +1,3 @@
-"""Shim de raíz: re-exporta assets/starter.py para que `from starter import ...`
-funcione sin duplicar el archivo de referencia del reto (ver CLAUDE.md)."""
+"""Shim de raíz: re-exporta assets/starter.py para el material de referencia."""
 from assets.starter import *  # noqa: F401,F403
-from assets.starter import CLAUDE_BIN, claude_p, claude_p_async, supervisor  # noqa: F401
+from assets.starter import CODEX_BIN, codex_exec, codex_exec_async, supervisor  # noqa: F401

@@ -2,12 +2,12 @@
 Harness de pruebas TDD para los agentes de Triage 072.
 
 Ejecuta el system prompt de un agente (agents/prompts/<nombre>.md) contra sus
-casos de prueba (agents/tests/cases/<nombre>.cases.json) invocando `claude -p`
-como una sesión real de Claude Code (suscripción, --model haiku-4.5), valida
+casos de prueba (agents/tests/cases/<nombre>.cases.json) invocando `codex exec`
+con salida estructurada, valida
 la salida contra su contrato (agents/contracts/<nombre>.schema.json) y contra
 las aserciones de cada caso.
 
-Reutiliza CLAUDE_BIN (descubrimiento del binario `claude`) de starter.py en
+Reutiliza CODEX_BIN (descubrimiento del binario `codex`) de starter.py en
 vez de reimplementarlo.
 
 Uso:
@@ -21,8 +21,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -33,14 +35,14 @@ CASES_DIR = Path(__file__).resolve().parent / "cases"
 GENERATED_MCP_CONFIG = Path(__file__).resolve().parent / "_mock_mcp_config.generated.json"
 
 sys.path.insert(0, str(REPO_ROOT))
-from starter import CLAUDE_BIN  # reutiliza descubrimiento del binario `claude`
+from starter import CODEX_BIN  # reutiliza descubrimiento del binario `codex`
 
 try:
     import jsonschema
 except ImportError:
     jsonschema = None
 
-MODEL = "haiku-4.5"
+MODEL = os.getenv("CODEX_MODEL", "gpt-5.6-luna")
 TIMEOUT_S = 60
 
 
@@ -52,21 +54,21 @@ def _mcp_config_path() -> Path:
     return GENERATED_MCP_CONFIG
 
 
-def _run_claude(system_prompt: str, user_payload: dict, schema: dict, needs_mcp: bool) -> dict:
-    cmd = [
-        CLAUDE_BIN, "-p",
-        "--model", MODEL,
-        "--append-system-prompt", system_prompt,
-        "--json-schema", json.dumps(schema),
-    ]
-    if needs_mcp:
-        cmd += ["--mcp-config", str(_mcp_config_path())]
-    cmd.append(json.dumps(user_payload, ensure_ascii=False))
-
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=TIMEOUT_S, stdin=subprocess.DEVNULL)
-    if r.returncode != 0:
-        raise RuntimeError(f"claude -p falló (exit {r.returncode}): {r.stderr.strip()[:500]}")
-    return json.loads(r.stdout.strip())
+def _run_codex(system_prompt: str, user_payload: dict, schema: dict, needs_mcp: bool) -> dict:
+    with tempfile.TemporaryDirectory(prefix="triage-codex-") as temp_dir:
+        temp_path = Path(temp_dir)
+        schema_path = temp_path / "schema.json"
+        output_path = temp_path / "output.json"
+        schema_path.write_text(json.dumps(schema), encoding="utf-8")
+        cmd = [CODEX_BIN, "exec", "--ephemeral", "--sandbox", "read-only", "--model", MODEL, "--output-schema", str(schema_path), "--output-last-message", str(output_path)]
+        if needs_mcp:
+            config = json.loads(_mcp_config_path().read_text(encoding="utf-8"))["mcpServers"]["mcp-reportes-mock"]
+            cmd += ["--config", f'mcp_servers.reportes.command={json.dumps(config["command"])}', "--config", f'mcp_servers.reportes.args={json.dumps(config["args"])}', "--config", "mcp_servers.reportes.required=true", "--config", 'mcp_servers.reportes.default_tools_approval_mode="auto"']
+        cmd.append(f"{system_prompt}\n\nReporte de entrada (JSON):\n{json.dumps(user_payload, ensure_ascii=False)}\n\nResponde exclusivamente con JSON que cumpla el esquema.")
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=TIMEOUT_S, stdin=subprocess.DEVNULL)
+        if r.returncode != 0:
+            raise RuntimeError(f"codex exec falló (exit {r.returncode}): {r.stderr.strip()[:500]}")
+        return json.loads(output_path.read_text(encoding="utf-8").strip())
 
 
 def _check_case(output: dict, case: dict) -> list[str]:
@@ -129,7 +131,7 @@ def run_agent_tests(agent_name: str, verbose: bool = False) -> dict:
     for case in cases:
         entry: dict = {"id": case["id"]}
         try:
-            output = _run_claude(system_prompt, case["input"], schema, needs_mcp)
+            output = _run_codex(system_prompt, case["input"], schema, needs_mcp)
             errors = []
             if jsonschema:
                 try:

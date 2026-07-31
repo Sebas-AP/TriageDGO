@@ -17,7 +17,7 @@ REPORTE_BASE = {
 
 
 @pytest.mark.asyncio
-async def test_regla_1_patron_mas_causa_estructural_sube_a_alta_minimo(mock_claude_p, monkeypatch) -> None:
+async def test_regla_1_patron_mas_causa_estructural_sube_a_alta_minimo(mock_codex_exec, monkeypatch) -> None:
     """Similares ≥10 + causa estructural ⇒ urgencia mínima 'alta'."""
     import starter
 
@@ -42,7 +42,7 @@ async def test_regla_1_patron_mas_causa_estructural_sube_a_alta_minimo(mock_clau
 
 
 @pytest.mark.asyncio
-async def test_regla_2_categoria_critica_cerca_de_escuela_sube_a_critica(mock_claude_p, monkeypatch) -> None:
+async def test_regla_2_categoria_critica_cerca_de_escuela_sube_a_critica(mock_codex_exec, monkeypatch) -> None:
     """Categoría de riesgo + <500m de escuela ⇒ urgencia 'critica'."""
     import starter
 
@@ -59,7 +59,7 @@ async def test_regla_2_categoria_critica_cerca_de_escuela_sube_a_critica(mock_cl
 
 
 @pytest.mark.asyncio
-async def test_regla_3_fallo_de_subagente_marca_revision_manual(mock_claude_p, monkeypatch) -> None:
+async def test_regla_3_fallo_de_subagente_marca_revision_manual(mock_codex_exec, monkeypatch) -> None:
     import starter
 
     async def _falla(*_args, **_kwargs):
@@ -73,7 +73,7 @@ async def test_regla_3_fallo_de_subagente_marca_revision_manual(mock_claude_p, m
 
 
 @pytest.mark.asyncio
-async def test_regla_4_ticket_se_crea_antes_de_enviar_acuse(mock_claude_p) -> None:
+async def test_regla_4_ticket_se_crea_antes_de_enviar_acuse(mock_codex_exec) -> None:
     resultado = await supervisor(REPORTE_BASE)
 
     assert resultado["ticket_id"] is not None
@@ -87,7 +87,7 @@ async def test_regla_4_ticket_se_crea_antes_de_enviar_acuse(mock_claude_p) -> No
 )
 @pytest.mark.asyncio
 async def test_regla_5_mapping_fijo_urgencia_a_prioridad(
-    mock_claude_p, monkeypatch, urgencia: str, prioridad_esperada: str
+    mock_codex_exec, monkeypatch, urgencia: str, prioridad_esperada: str
 ) -> None:
     import starter
 
