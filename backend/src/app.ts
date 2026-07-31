@@ -46,16 +46,22 @@ export function createApp(deps: AppDependencies = {}) {
   app.get("/ciudadano/reportes/:reporteId", async (req, res) => {
     try { const principal = await authenticate(req); const report = await store.getReport(req.params.reporteId); if (!report || principal.role !== "invitado" || report.ciudadano_id !== principal.uid) return res.status(404).json({ error: "NOT_FOUND" }); return res.json(toCitizen(report)); } catch { return res.status(401).json({ error: "UNAUTHENTICATED" }); }
   });
-  const clarificationSessions = new Map<string, { owner: string; turns: number }>();
+  const clarificationSessions = new Map<string, { owner: string }>();
   app.post("/reportes/aclarificacion", async (req, res) => {
     try {
-      const principal = await authenticate(req); if (principal.role !== "invitado") return res.status(403).json({ error: "FORBIDDEN" });
+      const principal = await authenticate(req);
       const body = req.body as { sessionId?: unknown; description?: unknown; answers?: Array<{ answer?: unknown }> };
-      if (typeof body.sessionId !== "string") { if (typeof body.description !== "string" || !body.description.trim()) return res.status(400).json({ error: "INVALID_CLARIFICATION" }); const sessionId = randomUUID(); clarificationSessions.set(sessionId, { owner: principal.uid, turns: 1 }); return res.json({ sessionId, complete: false, questions: ["¿Puedes indicar una referencia cercana o el tamaño aproximado?"] }); }
+      if (typeof body.sessionId !== "string") {
+        if (typeof body.description !== "string" || !body.description.trim()) return res.status(400).json({ error: "INVALID_CLARIFICATION" });
+        const sessionId = randomUUID();
+        const question = clarificationQuestion(body.description);
+        if (!question) return res.json({ sessionId, complete: true, questions: [] });
+        clarificationSessions.set(sessionId, { owner: principal.uid });
+        return res.json({ sessionId, complete: false, questions: [question] });
+      }
       const session = clarificationSessions.get(body.sessionId); if (!session || session.owner !== principal.uid) return res.status(404).json({ error: "NOT_FOUND" });
-      const unknown = body.answers?.some((answer) => typeof answer.answer === "string" && /^(no (lo )?s[eé]|no s[eé]|desconozco|no puedo)/i.test(answer.answer.trim())) ?? false;
-      session.turns += 1; if (unknown || session.turns >= 3) return res.json({ sessionId: body.sessionId, complete: true, questions: [] });
-      return res.json({ sessionId: body.sessionId, complete: false, questions: ["¿Hay algún riesgo inmediato para personas o vehículos?"] });
+      clarificationSessions.delete(body.sessionId);
+      return res.json({ sessionId: body.sessionId, complete: true, questions: [] });
     } catch { return res.status(401).json({ error: "UNAUTHENTICATED" }); }
   });
   app.get("/reportes/:reporteId", async (req, res) => {
@@ -66,7 +72,7 @@ export function createApp(deps: AppDependencies = {}) {
   });
   app.get("/admin/reportes", async (req, res) => {
     const principal = await adminOnly(req, res); if (!principal) return;
-    const reports = (await store.listReports()).filter((report) => principal.accessLevel === "coordinator" ? (!report.area_responsable || principal.areas.includes(report.area_responsable)) : report.asignado_a === principal.uid).map(toAdmin);
+    const reports = (await store.listReports()).filter((report) => canAccess(principal, report)).map(toAdmin);
     return res.json({ reports });
   });
   app.patch("/admin/reportes/:reporteId/asignacion", async (req, res) => {
@@ -116,9 +122,17 @@ export function createApp(deps: AppDependencies = {}) {
   app.patch("/admin/usuarios/:userId/estado", async (req, res) => { const principal = await coordinatorOnly(req, res); if (!principal) return; const active = (req.body as { active?: unknown }).active; if (typeof active !== "boolean") return res.status(400).json({ error: "INVALID_USER" }); const user = await adminUsers.setActive(req.params.userId, active); return user ? res.json({ user }) : res.status(404).json({ error: "NOT_FOUND" }); });
   return app;
 }
+
+function clarificationQuestion(description: string): string | null {
+  const text = description.toLowerCase();
+  if (/\b(bache|hoyo|socav[oó]n)\b/.test(text) && !/\b\d+\s*(cm|cent[ií]metros|metro|metros|m)\b/.test(text)) return "¿Qué tamaño aproximado tiene el bache?";
+  if (/\b(cable|poste|electri|luz|chispa)\b/.test(text) && !/\b(riesgo|peligro|ca[ií]do|expuesto|chisp)/.test(text)) return "¿Representa un riesgo inmediato para personas o vehículos?";
+  if (/\b(fuga|agua|inundaci[oó]n|drenaje)\b/.test(text) && !/\b(inunda|chorro|much[ao]|bloquea|afecta)/.test(text)) return "¿El agua afecta el paso peatonal, la calle o alguna vivienda?";
+  return null;
+}
 function citizenStatus(report: { progreso?: string; estado: string }) { return report.progreso === "resuelto" || report.progreso === "cerrado" ? "resolved" : report.progreso === "en_atencion" ? "in_progress" : report.progreso === "asignado" ? "assigned" : report.estado === "encolado" ? "received" : report.estado === "completado" ? "ready" : report.estado === "revision_manual" ? "failed" : "processing"; }
 function toAdmin(report: Awaited<ReturnType<TriageStore["getReport"]>>) { return report && ({ id: report.reporte_id, folio: report.reporte_id, description: report.texto, status: citizenStatus(report), area: report.area_responsable, category: report.categoria, priority: report.prioridad, assigneeId: report.asignado_a, createdAt: report.created_at, location: { address: report.location?.address, lat: report.coordenadas[0], lng: report.coordenadas[1] } }); }
-function canAccess(principal: Principal, report: Report) { return principal.accessLevel === "coordinator" ? !report.area_responsable || principal.areas.includes(report.area_responsable) : report.asignado_a === principal.uid; }
+function canAccess(principal: Principal, report: Report) { return !report.area_responsable || principal.areas.includes(report.area_responsable); }
 function toAdminDetail(report: Report) { return { ...toAdmin(report), progress: report.progreso ?? "recibido", priority: report.prioridad, notes: (report.notas ?? []).map((note) => ({ text: note.text, authorId: note.author_id, createdAt: note.created_at })), contact: report.contact, answers: report.answers ?? [], evidence: report.adjuntos ?? [] }; }
 function validUserBody(body: { email?: unknown; password?: unknown; name?: unknown; areas?: unknown; accessLevel?: unknown }, creating: boolean): body is { email: string; password: string; name: string; areas: string[]; accessLevel: "operator" | "coordinator" } {
   if (creating && (typeof body.email !== "string" || !/^\S+@\S+\.\S+$/.test(body.email) || typeof body.password !== "string" || body.password.length < 8)) return false;

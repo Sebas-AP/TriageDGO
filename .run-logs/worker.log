@@ -2,4 +2,6 @@
 > triage072-backend@0.1.0 worker
 > ts-node-dev --respawn --transpile-only src/worker.ts
 
-[INFO] 09:34:36 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[INFO] 13:00:07 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+Acuse pendiente DUR-6E93D3B2: Sebastian, lamentamos que el servicio de basura no haya pasado durante un mes. Hemos recibido tu reporte y será revisado por el área correspondiente. Agradecemos que nos hayas informado.
+Acuse pendiente DUR-BC957BC3: Gracias, Alan Alexis, por reportar la coladera abierta y el mal olor. Hemos recibido tu reporte y se encuentra en proceso de atención. Por seguridad, evita acercarte al punto y, si es posible, advierte a otras personas.

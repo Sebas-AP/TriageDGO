@@ -412,12 +412,11 @@ const reportService: ReportService = {
   async requestClarification(input, revision) {
     const description = typeof input === "string" ? input : input.description || "";
     await new Promise((resolve) => window.setTimeout(resolve, 650));
+    if (typeof input !== "string" && input.sessionId) return { sessionId: input.sessionId, complete: true, questions: [] };
     return {
-      question:
-        description.trim().length > 25
-          ? "¿El problema obstruye por completo el paso o todavía se puede circular con precaución?"
-          : null,
-      revision: revision ?? 0,
+      sessionId: "demo-clarification",
+      complete: description.trim().length <= 25,
+      questions: description.trim().length > 25 ? ["¿El problema obstruye por completo el paso o todavía se puede circular con precaución?"] : [],
     };
   },
   async getPublicReport(folio) {
