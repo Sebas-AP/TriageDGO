@@ -49,5 +49,12 @@ Las pruebas no realizan solicitudes reales ni necesitan una API key:
 python3 services/mcp-google-maps/test_server.py
 ```
 
+Con una API key configurada, la prueba completa inicia el servidor por `stdio`,
+descubre sus tools y ejecuta una consulta real:
+
+```bash
+python3 services/mcp-google-maps/smoke_test.py
+```
+
 Para una prueba contra Google deben estar habilitadas **Places API (New)** y
 **Geocoding API** en el proyecto asociado a `GOOGLE_MAPS_API_KEY`.
