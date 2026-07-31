@@ -95,6 +95,7 @@ export class Supervisor {
     const value = <T>(i: number): T | undefined => settled[i]?.status === "fulfilled" ? settled[i].value as T : undefined;
     const classifier = value<AgentOutputs["classifier"]>(0) ?? fallback;
     const pattern = value<AgentOutputs["pattern"]>(1) ?? { similares_encontrados: 0, posible_causa_estructural: false, ascenso_sugerido: false, nota: "No disponible" };
+    const verifiedPattern = { ...pattern, posible_causa_estructural: pattern.posible_causa_estructural && pattern.similares_encontrados > 0 };
     const acuse = value<AgentOutputs["acuse"]>(2);
     const dedup = value<NonNullable<AgentOutputs["dedup"]>>(3);
     if (dedup?.duplicado_detectado && dedup.reporte_id_original) {
@@ -103,8 +104,8 @@ export class Supervisor {
     }
     const school = await this.geo.schoolNear(report.coordenadas);
     const modifier = !school && ((await this.store.isRecurrent(report)) || Boolean(report.vulnerable) || await this.geo.weatherAggravates(report));
-    const arbitration = classifier.categoria === "revision_manual" ? { urgencia_final: "alta" as Urgency, prioridad_final: "P1" as const, regla_gatillada: null } : arbitrate({ categoria: classifier.categoria, urgencia: classifier.urgencia_base, similares: pattern.similares_encontrados, causaEstructural: pattern.posible_causa_estructural, cercaEscuela: Boolean(school), modifier });
-    const ticket = await this.store.createTicket({ reporte_id: report.reporte_id, categoria: classifier.categoria, area_responsable: canonicalArea(classifier.categoria), ...arbitration, revision_manual: failed || classifier.categoria === "revision_manual", acuse_enviado: false, duplicados: 0, atencion_preferente: false, modificadores: modifier ? ["modificador"] : [], pattern_detected: pattern.posible_causa_estructural, similares_encontrados: pattern.similares_encontrados, patron_nota: pattern.nota });
+    const arbitration = classifier.categoria === "revision_manual" ? { urgencia_final: "alta" as Urgency, prioridad_final: "P1" as const, regla_gatillada: null } : arbitrate({ categoria: classifier.categoria, urgencia: classifier.urgencia_base, similares: verifiedPattern.similares_encontrados, causaEstructural: verifiedPattern.posible_causa_estructural, cercaEscuela: Boolean(school), modifier });
+    const ticket = await this.store.createTicket({ reporte_id: report.reporte_id, categoria: classifier.categoria, area_responsable: canonicalArea(classifier.categoria), ...arbitration, revision_manual: failed || classifier.categoria === "revision_manual", acuse_enviado: false, duplicados: 0, atencion_preferente: false, modificadores: modifier ? ["modificador"] : [], pattern_detected: verifiedPattern.posible_causa_estructural, similares_encontrados: verifiedPattern.similares_encontrados, patron_nota: verifiedPattern.nota });
     if (acuse) { await this.sendAcuse(report.ciudadano_id, acuse.mensaje, ticket.ticket_id); ticket.acuse_enviado = true; }
     if (school && ticket.urgencia_final === "critica") { const escalation = await this.agents.escalation(ticket, school); ticket.escalado = escalation.debe_escalar; }
     report.estado = ticket.revision_manual ? "revision_manual" : "completado";
