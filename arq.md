@@ -34,7 +34,7 @@ Todo lo demás (orquestación del supervisor, controllers, reglas de arbitraje, 
 │  Controllers → Orquestador Supervisor → Procesos claude-p (agentes)│
 │  Servicios: Ingesta, Prioridad dinámica, Notificación             │
 │  Agent-runner: invocación de CLI `claude` para cada subagente      │
-└───────┬───────────────┬───────────────┬───────────────┬───────────┘
+└───────┬───────────────┬───────────────┬───────────────┬───────────┘2
         │ MCP (agentes  │ MCP           │ MCP           │ HTTP
         │ en sesión)    │ (supervisor)  │ (supervisor)  │
         ▼                ▼               ▼               ▼

@@ -23,16 +23,38 @@ describe("UI API", () => {
     expect((await request(coordinator).patch(`/admin/reportes/${created.body.reportId}/asignacion`).send({ assigneeId: "operator", area: "agua" })).status).toBe(200);
     const operator = createApp({ store, authenticate: async () => ({ uid: "operator", role: "admin", areas: ["agua"], accessLevel: "operator" }) });
     expect((await request(operator).get("/admin/reportes")).body.reports).toHaveLength(1);
-    const outsider = createApp({ store, authenticate: async () => ({ uid: "other", role: "admin", areas: ["agua"], accessLevel: "operator" }) });
+    const outsider = createApp({ store, authenticate: async () => ({ uid: "other", role: "admin", areas: ["obras"], accessLevel: "operator" }) });
     expect((await request(outsider).get("/admin/reportes")).body.reports).toHaveLength(0);
+  });
+
+  it("shows unassigned reports to an operator in the responsible area", async () => {
+    const store = new InMemoryTriageStore();
+    const citizen = createApp({ store, authenticate: async () => ({ uid: "citizen", role: "invitado", areas: [] }) });
+    const created = await request(citizen).post("/reportes/ingesta").set("Authorization", "Bearer guest-token").send({ canal: "formulario", texto: "Bache", coordenadas: [24, -104] });
+    await store.updateReport(created.body.reportId, { area_responsable: "Obras Públicas" });
+    const operator = createApp({ store, authenticate: async () => ({ uid: "operator", role: "admin", areas: ["Obras Públicas"], accessLevel: "operator" }) });
+    expect((await request(operator).get("/admin/reportes")).body.reports).toHaveLength(1);
   });
 
   it("ends clarification after an unknown answer", async () => {
     const app = createApp({ authenticate: async () => ({ uid: "citizen", role: "invitado", areas: [] }) });
-    const first = await request(app).post("/reportes/aclarificacion").send({ description: "Hay un problema", location: { lat: 24, lng: -104 } });
+    const first = await request(app).post("/reportes/aclarificacion").send({ description: "Hay un bache frente a la escuela", location: { lat: 24, lng: -104 } });
     expect(first.status).toBe(200);
-    expect(first.body).toMatchObject({ sessionId: expect.any(String), complete: false });
+    expect(first.body).toMatchObject({ sessionId: expect.any(String), complete: false, questions: ["¿Qué tamaño aproximado tiene el bache?"] });
     const done = await request(app).post("/reportes/aclarificacion").send({ sessionId: first.body.sessionId, answers: [{ question: first.body.questions[0], answer: "No lo sé" }] });
     expect(done.body).toMatchObject({ complete: true, questions: [] });
+  });
+
+  it("does not ask again for the location or a fixed size question", async () => {
+    const app = createApp({ authenticate: async () => ({ uid: "citizen", role: "invitado", areas: [] }) });
+    const response = await request(app).post("/reportes/aclarificacion").send({ description: "La lámpara del parque no enciende desde ayer.", location: { lat: 24, lng: -104 } });
+    expect(response.body).toMatchObject({ complete: true, questions: [] });
+  });
+
+  it("allows an authenticated administrator to use the public clarification step", async () => {
+    const app = createApp({ authenticate: async () => ({ uid: "admin", role: "admin", areas: ["servicios"], accessLevel: "operator" }) });
+    const response = await request(app).post("/reportes/aclarificacion").send({ description: "Hay un bache frente a la escuela" });
+    expect(response.status).toBe(200);
+    expect(response.body.questions).toEqual(["¿Qué tamaño aproximado tiene el bache?"]);
   });
 });

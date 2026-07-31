@@ -27,7 +27,6 @@ type FormValues = z.infer<typeof schema>;
 export default function ReportWizard() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const stepRef = useRef(step);
   const idempotencyKeyRef = useRef(crypto.randomUUID());
   const [questions, setQuestions] = useState<string[]>([]);
   const [clarificationSession, setClarificationSession] = useState("");
@@ -49,9 +48,6 @@ export default function ReportWizard() {
   const values = watch();
   const location = values.location as LocationValue | undefined;
 
-  useEffect(() => {
-    stepRef.current = step;
-  }, [step]);
   useEffect(
     () => () => {
       if (photoPreview) URL.revokeObjectURL(photoPreview);
@@ -66,22 +62,36 @@ export default function ReportWizard() {
   async function next() {
     const fields = fieldsByStep[step];
     if (fields.length > 0 && !(await trigger(fields))) return;
-    setStep((current) => Math.min(current + 1, steps.length - 1));
-  }
-  async function checkClarification() {
-    if (!(await trigger("description"))) return;
-    setCheckingQuestion(true);
-    try {
-      const response = await services.reports.requestClarification({ sessionId: clarificationSession || undefined, description: clarificationSession ? undefined : values.description, answers: clarificationAnswers });
-      if (stepRef.current === 2 && "questions" in response) {
-        setClarificationSession(response.sessionId);
-        setQuestions(response.questions);
+    if (step === 2) {
+      if (questions.some((question) => !clarificationAnswers.find((answer) => answer.question === question)?.answer.trim())) {
+        setSubmitError("Responde la pregunta o selecciona ‘No lo sé’ para continuar.");
+        return;
       }
-    } catch (cause) {
-      setSubmitError(cause instanceof Error ? cause.message : "No pudimos revisar la información faltante.");
-    } finally {
-      setCheckingQuestion(false);
+      setSubmitError("");
+      setCheckingQuestion(true);
+      try {
+        const response = await services.reports.requestClarification({ sessionId: clarificationSession || undefined, description: clarificationSession ? undefined : values.description, answers: clarificationAnswers });
+        if ("complete" in response) {
+          if (!response.complete && response.questions.length > 0) {
+            setClarificationSession(response.sessionId);
+            setQuestions(response.questions);
+            return;
+          }
+          setQuestions([]);
+          setClarificationSession("");
+        } else if (response.question) {
+          setClarificationSession("demo");
+          setQuestions([response.question]);
+          return;
+        }
+      } catch (cause) {
+        setSubmitError(cause instanceof Error ? cause.message : "No pudimos revisar la información faltante.");
+        return;
+      } finally {
+        setCheckingQuestion(false);
+      }
     }
+    setStep((current) => Math.min(current + 1, steps.length - 1));
   }
   function selectPhoto(file?: File) {
     setSubmitError("");
@@ -151,7 +161,6 @@ export default function ReportWizard() {
             <label htmlFor="description">Incluye referencias y cualquier riesgo visible</label>
             <textarea id="description" rows={7} maxLength={800} {...register("description", { onChange: () => { setQuestions([]); setClarificationSession(""); setClarificationAnswers([]); } })} placeholder="Ej. Hay un cable caído frente a la primaria y bloquea la banqueta…" />
             <div className="field-meta">{errors.description ? <span className="field-error">{errors.description.message}</span> : <span>Evita compartir información sensible.</span>}<span>{values.description.length}/800</span></div>
-            <button className="secondary-button question-button" type="button" onClick={() => void checkClarification()}>{checkingQuestion ? "Analizando…" : "Revisar si falta algún dato"}</button>
             {questions.map((question, index) => <div className="agent-question" key={question}><span className="agent-spark">✦</span><div><strong>Una pregunta para mejorar el reporte</strong><label htmlFor={`clarification-${index}`}>{question}</label><textarea id={`clarification-${index}`} rows={3} value={clarificationAnswers.find((item) => item.question === question)?.answer || ""} onChange={(event) => setClarificationAnswers((current) => [...current.filter((item) => item.question !== question), { question, answer: event.target.value }])} /><button type="button" className="text-button" onClick={() => setClarificationAnswers((current) => [...current.filter((item) => item.question !== question), { question, answer: "No lo sé" }])}>No lo sé</button></div></div>)}
           </div>}
           {step === 3 && <div className="form-step">
@@ -176,10 +185,10 @@ export default function ReportWizard() {
             <button
               type="button"
               className="primary-button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || checkingQuestion}
               onClick={step < steps.length - 1 ? () => void next() : () => void handleSubmit(submit)()}
             >
-              {step < steps.length - 1 ? "Siguiente" : isSubmitting ? "Enviando…" : "Enviar reporte"}
+              {step < steps.length - 1 ? checkingQuestion ? "Revisando…" : "Siguiente" : isSubmitting ? "Enviando…" : "Enviar reporte"}
             </button>
           </div>
         </form>
