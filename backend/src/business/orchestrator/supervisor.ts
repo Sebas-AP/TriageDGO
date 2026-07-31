@@ -19,7 +19,7 @@ export interface GeoGateway {
 }
 
 /** Callback for sending citizen acknowledgments. */
-export type AcuseSender = (citizenId: string, message: string, ticketId: string) => Promise<void>;
+export type AcuseSender = (report: Report, message: string, ticketId: string) => Promise<boolean | void>;
 
 const fallback = {
   categoria: "revision_manual" as const,
@@ -100,13 +100,13 @@ export class Supervisor {
     const dedup = value<NonNullable<AgentOutputs["dedup"]>>(3);
     if (dedup?.duplicado_detectado && dedup.reporte_id_original) {
       const original = await this.store.linkDuplicate(report, dedup.reporte_id_original);
-      if (original) { report.estado = failed ? "revision_manual" : "completado"; if (acuse) await this.sendAcuse(report.ciudadano_id, acuse.mensaje, original.ticket_id); return { ticket: original }; }
+      if (original) { report.estado = failed ? "revision_manual" : "completado"; if (acuse) await this.sendAcuse(report, acuse.mensaje, original.ticket_id); return { ticket: original }; }
     }
     const school = await this.geo.schoolNear(report.coordenadas);
     const modifier = !school && ((await this.store.isRecurrent(report)) || Boolean(report.vulnerable) || await this.geo.weatherAggravates(report));
     const arbitration = classifier.categoria === "revision_manual" ? { urgencia_final: "alta" as Urgency, prioridad_final: "P1" as const, regla_gatillada: null } : arbitrate({ categoria: classifier.categoria, urgencia: classifier.urgencia_base, similares: verifiedPattern.similares_encontrados, causaEstructural: verifiedPattern.posible_causa_estructural, cercaEscuela: Boolean(school), modifier });
     const ticket = await this.store.createTicket({ reporte_id: report.reporte_id, categoria: classifier.categoria, area_responsable: canonicalArea(classifier.categoria), ...arbitration, revision_manual: failed || classifier.categoria === "revision_manual", acuse_enviado: false, duplicados: 0, atencion_preferente: false, modificadores: modifier ? ["modificador"] : [], pattern_detected: verifiedPattern.posible_causa_estructural, similares_encontrados: verifiedPattern.similares_encontrados, patron_nota: verifiedPattern.nota });
-    if (acuse) { await this.sendAcuse(report.ciudadano_id, acuse.mensaje, ticket.ticket_id); ticket.acuse_enviado = true; }
+    if (acuse) ticket.acuse_enviado = (await this.sendAcuse(report, acuse.mensaje, ticket.ticket_id)) === true;
     if (school && ticket.urgencia_final === "critica") { const escalation = await this.agents.escalation(ticket, school); ticket.escalado = escalation.debe_escalar; }
     report.estado = ticket.revision_manual ? "revision_manual" : "completado";
     report.ticket_id = ticket.ticket_id;
