@@ -1,25 +1,16 @@
 import type { AcuseSender } from "../orchestrator/supervisor";
-import { createTwilioHttpClient } from "../../mcp/clients/twilio.client";
-
-function whatsappDestination(phone: string): string | undefined {
-  const normalized = phone.replace(/\D/g, "");
-  if (normalized.length === 10) return `whatsapp:+52${normalized}`;
-  if (normalized.length >= 11) return `whatsapp:+${normalized}`;
-  return undefined;
-}
 
 export const notificationService: AcuseSender = async (report, message, ticketId) => {
-  const destination = report.contact?.consent && report.contact.phone ? whatsappDestination(report.contact.phone) : undefined;
-  if (!destination) { console.warn(`Acuse pendiente ${ticketId}: sin contacto autorizado`); return false; }
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const whatsappFrom = process.env.TWILIO_WHATSAPP_FROM;
-  if (!accountSid || !authToken || !whatsappFrom) { console.warn(`Acuse pendiente ${ticketId}: Twilio no configurado`); return false; }
+  void report;
+  const token = process.env.TELEGRAM_CITIZEN_BOT_TOKEN?.trim();
+  const chatId = process.env.TELEGRAM_CITIZEN_CHAT_ID?.trim();
+  if (!token || !chatId) { console.warn(`Acuse pendiente ${ticketId}: Telegram ciudadano no configurado`); return false; }
   try {
-    await createTwilioHttpClient(accountSid, authToken, whatsappFrom).enviarWhatsapp(destination, message);
-    return true;
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text: `✅ Reporte ${ticketId}\n\n${message}`, protect_content: true, link_preview_options: { is_disabled: true } }), signal: AbortSignal.timeout(10_000) });
+    const body = await response.json() as { ok?: boolean };
+    return response.ok && body.ok === true;
   } catch {
-    console.warn(`Acuse pendiente ${ticketId}: entrega WhatsApp fallida`);
+    console.warn(`Acuse pendiente ${ticketId}: entrega Telegram fallida`);
     return false;
   }
 };

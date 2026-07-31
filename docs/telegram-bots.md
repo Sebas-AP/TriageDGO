@@ -4,6 +4,10 @@ La rama `telegram` envía alertas internas después de que el Supervisor crea y
 persiste el ticket final. Telegram no participa en la clasificación y una falla
 del bot nunca revierte un reporte aceptado.
 
+El acuse ciudadano usa `TELEGRAM_CITIZEN_BOT_TOKEN` y
+`TELEGRAM_CITIZEN_CHAT_ID`. El ciudadano debe iniciar antes la conversación con
+el bot (`/start`), ya que Telegram no permite que un bot inicie un chat privado.
+
 ## Enrutamiento
 
 | Destino | Categorías predeterminadas |
@@ -42,6 +46,8 @@ TELEGRAM_SALUD_BOT_TOKEN=
 TELEGRAM_SALUD_CHAT_ID=
 TELEGRAM_BACHES_BOT_TOKEN=
 TELEGRAM_BACHES_CHAT_ID=
+TELEGRAM_CITIZEN_BOT_TOKEN=
+TELEGRAM_CITIZEN_CHAT_ID=
 TELEGRAM_SALUD_CATEGORIES=basura_acumulada,drenaje_tapado,fuga_agua
 TELEGRAM_TIMEOUT_MS=5000
 TELEGRAM_MAX_ATTEMPTS=3
