@@ -38,6 +38,11 @@ export interface AgentProgress {
   error?: string;
 }
 
+export interface AgentConclusion {
+  agent: AgentName;
+  text: string;
+}
+
 export interface SimilarReport {
   id: string;
   category: string;
@@ -110,6 +115,7 @@ export interface ReportRecord {
   team?: string;
   dueAt?: string;
   agents: Record<AgentName, AgentProgress>;
+  agentConclusions?: AgentConclusion[];
   ticket?: Ticket;
   similarReports: SimilarReport[];
   similarCount?: number;

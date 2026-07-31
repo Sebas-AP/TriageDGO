@@ -125,6 +125,9 @@ export function ReportDetail({
                 return <div key={agent} className={`agent-card agent-${progress.status}`}><span className="agent-icon">{progress.status === "done" ? "✓" : progress.status === "running" ? "✦" : progress.status === "error" ? "!" : "·"}</span><div><strong>{agentLabels[agent]}</strong><small>{progress.status === "done" ? "Completado" : progress.status === "running" ? "Analizando" : progress.status}</small></div></div>;
               })}
             </div>
+            {report.agentConclusions && <div className="agent-conclusions">
+              {report.agentConclusions.map((conclusion) => <div key={conclusion.agent} className="agent-conclusion"><strong>{agentLabels[conclusion.agent]}</strong><p>{conclusion.text}</p></div>)}
+            </div>}
           </section>
 
           {report.ticket && (

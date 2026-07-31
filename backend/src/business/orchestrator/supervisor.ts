@@ -117,6 +117,11 @@ export class Supervisor {
     report.similares_encontrados = ticket.similares_encontrados;
     report.patron_nota = ticket.patron_nota;
     report.acuse_enviado = ticket.acuse_enviado;
+    report.agent_conclusions = {
+      classifier: classifier.resumen,
+      pattern: ticket.patron_nota,
+      ...(acuse ? { acuse: acuse.mensaje } : {}),
+    };
     return { ticket };
   }
   private async start(report: Report, agent: string, operation: (trace: AgentTraceObserver) => Promise<unknown>): Promise<StartedAgentTask> {

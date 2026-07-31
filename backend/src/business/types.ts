@@ -20,7 +20,7 @@ export interface ReportInput {
 export interface ReportNote { text: string; author_id: string; created_at: string; }
 export interface Report extends ReportInput {
   reporte_id: string; ciudadano_id: string; created_at: string; estado: "encolado" | "procesando" | "completado" | "revision_manual";
-  idempotency_key: string; ticket_id?: string; duplicado_de?: string; categoria?: Category | "revision_manual"; area_responsable?: string; asignado_a?: string; progreso?: "recibido" | "en_analisis" | "asignado" | "en_atencion" | "resuelto" | "cerrado"; prioridad?: Priority; notas?: ReportNote[]; pattern_detected?: boolean; similares_encontrados?: number; patron_nota?: string; acuse_enviado?: boolean; agent_statuses?: Partial<Record<"classifier" | "pattern" | "acuse", "done" | "error">>;
+  idempotency_key: string; ticket_id?: string; duplicado_de?: string; categoria?: Category | "revision_manual"; area_responsable?: string; asignado_a?: string; progreso?: "recibido" | "en_analisis" | "asignado" | "en_atencion" | "resuelto" | "cerrado"; prioridad?: Priority; notas?: ReportNote[]; pattern_detected?: boolean; similares_encontrados?: number; patron_nota?: string; acuse_enviado?: boolean; agent_statuses?: Partial<Record<"classifier" | "pattern" | "acuse", "done" | "error">>; agent_conclusions?: Partial<Record<"classifier" | "pattern" | "acuse", string>>;
 }
 export interface IngestionJob {
   job_id: string; reporte_id: string; estado: "encolado" | "procesando" | "reintento" | "completado" | "revision_manual";
