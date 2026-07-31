@@ -8,7 +8,8 @@ const guest = async () => ({ uid: "citizen-1", role: "invitado" as const, areas:
 
 describe("frontend report contract", () => {
   it("accepts a multipart form, normalizes it, and returns the frontend submission shape", async () => {
-    const app = createApp({ store: new InMemoryTriageStore(), authenticate: guest });
+    const store = new InMemoryTriageStore();
+    const app = createApp({ store, authenticate: guest });
 
     const response = await request(app)
       .post("/reportes/ingesta")
@@ -16,12 +17,15 @@ describe("frontend report contract", () => {
       .field("phone", "6181234567")
       .field("consent", "true")
       .field("description", "Hay un bache profundo frente a la escuela primaria.")
+      .field("answers", JSON.stringify([{ question: "¿Qué tamaño tiene?", answer: "No lo sé" }]))
       .field("location", JSON.stringify({ address: "Hidalgo 100", lat: 24.0291, lng: -104.6293, placeId: "place-1" }))
       .attach("photo", Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), { filename: "bache.png", contentType: "image/png" });
 
     expect(response.status).toBe(202);
     expect(response.body).toMatchObject({ reportId: expect.any(String), folio: expect.any(String), status: "received" });
     expect(response.body.folio).toBe(response.body.reportId);
+    const report = await store.getReport(response.body.reportId);
+    expect(report?.answers).toEqual([{ question: "¿Qué tamaño tiene?", answer: "No lo sé" }]);
   });
 
   it("deduplicates a multipart submission when the browser retries with the same key", async () => {

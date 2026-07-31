@@ -146,6 +146,7 @@ export interface ReportSubmission {
   location: LocationValue;
   description: string;
   clarificationAnswer?: string;
+  clarificationAnswers?: Array<{ question: string; answer: string }>;
   photo?: File;
   /** Reused by the wizard when a failed submission is retried. Sent only as an HTTP header. */
   idempotencyKey?: string;
@@ -168,7 +169,13 @@ export interface AdminUser {
   uid: string;
   email: string;
   role: "admin";
+  accessLevel?: "operator" | "coordinator";
+  areas?: string[];
 }
+export interface ManagedAdminUser extends AdminUser { name: string; active: boolean; }
+
+export interface ClarificationRequest { sessionId?: string; description?: string; answers?: Array<{ question: string; answer: string }>; }
+export interface ClarificationResponse { sessionId: string; complete: boolean; questions: string[]; }
 
 export interface FollowUpInput {
   dueAt: string;

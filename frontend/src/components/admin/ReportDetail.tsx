@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { services } from "../../services";
+import { config } from "../../config";
+import { useAuth } from "../../app/AuthContext";
 import { notify } from "../../lib/feedback";
 import type { OperationalStatus, Priority, ReportRecord } from "../../types";
 import { ReportMap } from "../maps/ReportMap";
@@ -26,6 +28,7 @@ export function ReportDetail({
   onUpdated: (report: ReportRecord) => void;
   onClose?: () => void;
 }) {
+  const { user } = useAuth();
   const [tab, setTab] = useState<"summary" | "channel" | "timeline">("summary");
   const [panel, setPanel] = useState<ActionPanel>(null);
   const [busy, setBusy] = useState(false);
@@ -76,8 +79,8 @@ export function ReportDetail({
             {(Object.keys(statusLabels) as OperationalStatus[]).map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
           </select>
         </label>
-        <button onClick={() => setPanel("assign")}><span>◎</span>{report.assignee ? "Reasignar" : "Asignar"}</button>
-        <button onClick={() => setPanel("followup")}><span>◷</span>Programar seguimiento</button>
+        {user?.accessLevel === "coordinator" && <button onClick={() => setPanel("assign")}><span>◎</span>{report.assignee ? "Reasignar" : "Asignar"}</button>}
+        {config.mode === "demo" && <button onClick={() => setPanel("followup")}><span>◷</span>Programar seguimiento</button>}
         <button onClick={() => setPanel("note")}><span>＋</span>Agregar nota</button>
         <button onClick={() => window.print()}><span>▤</span>Orden de trabajo</button>
       </div>

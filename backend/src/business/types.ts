@@ -8,15 +8,19 @@ export type Urgency = "baja" | "media" | "alta" | "critica";
 export type Priority = "P0" | "P1" | "P2" | "P3";
 export type Channel = "formulario" | "whatsapp" | "voz";
 
-export interface Principal { uid: string; role: "invitado" | "admin"; areas: string[]; }
+export interface Principal { uid: string; role: "invitado" | "admin"; areas: string[]; accessLevel?: "operator" | "coordinator"; }
+export interface Contact { name?: string; phone?: string; email?: string; consent?: boolean; }
+export interface ReportLocation { address?: string; placeId?: string; }
+export interface ClarificationAnswer { question: string; answer: string; }
 export interface Attachment { storage_path: string; mime_type: string; kind: "foto" | "video" | "audio"; }
 export interface ReportInput {
   canal: Channel; texto: string; coordenadas: [number, number]; vulnerable?: boolean;
-  adjuntos?: Attachment[]; timestamp?: string;
+  adjuntos?: Attachment[]; timestamp?: string; contact?: Contact; location?: ReportLocation; answers?: ClarificationAnswer[];
 }
+export interface ReportNote { text: string; author_id: string; created_at: string; }
 export interface Report extends ReportInput {
   reporte_id: string; ciudadano_id: string; created_at: string; estado: "encolado" | "procesando" | "completado" | "revision_manual";
-  idempotency_key: string; ticket_id?: string; duplicado_de?: string;
+  idempotency_key: string; ticket_id?: string; duplicado_de?: string; categoria?: Category | "revision_manual"; area_responsable?: string; asignado_a?: string; progreso?: "recibido" | "en_analisis" | "asignado" | "en_atencion" | "resuelto" | "cerrado"; prioridad?: Priority; notas?: ReportNote[];
 }
 export interface IngestionJob {
   job_id: string; reporte_id: string; estado: "encolado" | "procesando" | "reintento" | "completado" | "revision_manual";
@@ -51,6 +55,8 @@ export interface AgentOutputs {
 export interface TriageStore {
   enqueue(input: ReportInput, principal: Principal, idempotencyKey: string): Promise<{ report: Report; job: IngestionJob }>;
   getReport(id: string): Promise<Report | undefined>;
+  listReports(): Promise<Report[]>;
+  updateReport(id: string, update: Partial<Pick<Report, "area_responsable" | "asignado_a" | "progreso" | "prioridad" | "notas">>): Promise<Report | undefined>;
   claimJob(now: Date): Promise<IngestionJob | undefined>;
   completeJob(job: IngestionJob, report: Report, ticket?: Ticket): Promise<void>;
   retryJob(job: IngestionJob, error: string): Promise<void>;

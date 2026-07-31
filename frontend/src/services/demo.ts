@@ -409,18 +409,25 @@ const reportService: ReportService = {
     schedulePipeline(report);
     return { reportId: id, folio, status: "received" };
   },
-  async requestClarification(description, revision) {
+  async requestClarification(input, revision) {
+    const description = typeof input === "string" ? input : input.description || "";
     await new Promise((resolve) => window.setTimeout(resolve, 650));
     return {
       question:
         description.trim().length > 25
           ? "¿El problema obstruye por completo el paso o todavía se puede circular con precaución?"
           : null,
-      revision,
+      revision: revision ?? 0,
     };
   },
   async getPublicReport(folio) {
     return [...reports.values()].find((report) => report.folio === folio) ?? null;
+  },
+  async listMine() {
+    return [...reports.values()].filter((report) => report.channel === "form");
+  },
+  async getMine(reportId) {
+    return reports.get(reportId) ?? null;
   },
 };
 
@@ -474,6 +481,9 @@ function publishUpdate(report: ReportRecord) {
 }
 
 const adminService: AdminService = {
+  async listUsers() { return [{ uid: "demo-admin", email: "admin@demo.local", name: "Mesa de Control", role: "admin" as const, accessLevel: "coordinator" as const, areas: ["agua", "obras"], active: true }]; },
+  async createUser(input) { return { uid: crypto.randomUUID(), role: "admin", active: true, ...input }; },
+  async setUserActive(userId, active) { return { uid: userId, email: "demo@local", name: "Cuenta demo", role: "admin", accessLevel: "operator", areas: [], active }; },
   async listClusters() {
     return [...clusters].sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt));
   },
@@ -601,7 +611,7 @@ const authService: AuthService = {
     return demoUser;
   },
   async login(email) {
-    demoUser = { uid: "demo-admin", email: email || "admin@demo.local", role: "admin" };
+    demoUser = { uid: "demo-admin", email: email || "admin@demo.local", role: "admin", accessLevel: "coordinator", areas: ["agua", "obras", "servicios"] };
     authListeners.forEach((listener) => listener(demoUser));
     return demoUser;
   },

@@ -102,7 +102,11 @@ export class Supervisor {
     const ticket = await this.store.createTicket({ reporte_id: report.reporte_id, categoria: classifier.categoria, area_responsable: classifier.area_responsable, ...arbitration, revision_manual: failed || classifier.categoria === "revision_manual", acuse_enviado: false, duplicados: 0, atencion_preferente: false, modificadores: modifier ? ["modificador"] : [] });
     if (acuse) { await this.sendAcuse(report.ciudadano_id, acuse.mensaje, ticket.ticket_id); ticket.acuse_enviado = true; }
     if (school && ticket.urgencia_final === "critica") { const escalation = await this.agents.escalation(ticket, school); ticket.escalado = escalation.debe_escalar; }
-    report.estado = ticket.revision_manual ? "revision_manual" : "completado"; report.ticket_id = ticket.ticket_id;
+    report.estado = ticket.revision_manual ? "revision_manual" : "completado";
+    report.ticket_id = ticket.ticket_id;
+    report.categoria = ticket.categoria;
+    report.area_responsable = canonicalArea(ticket.categoria);
+    report.prioridad = ticket.prioridad_final;
     return { ticket };
   }
   private async start(report: Report, agent: string, operation: (trace: AgentTraceObserver) => Promise<unknown>): Promise<StartedAgentTask> {
@@ -129,4 +133,20 @@ export class Supervisor {
     if (/(unexpected token.*json|json.*(?:parse|invalid|malformed)|syntaxerror)/.test(message)) return "json_error";
     return "process_error";
   }
+}
+
+function canonicalArea(category: Ticket["categoria"]): string {
+  return {
+    bache: "Obras Públicas",
+    fuga_agua: "AMD (Agua)",
+    alumbrado_apagado: "Servicios Públicos",
+    semaforo_apagado: "Vialidad",
+    basura_acumulada: "Servicios Públicos",
+    cable_caido: "CFE / SP",
+    ruido_excesivo: "Reglamentos",
+    arbol_riesgoso: "Medio Ambiente",
+    riesgo_seguridad: "Seguridad Pública",
+    drenaje_tapado: "AMD (Drenaje)",
+    revision_manual: "revision_manual",
+  }[category];
 }
