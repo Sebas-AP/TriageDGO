@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { resolve } from "node:path";
 
 import { buildCodexInvocation } from "../src/business/agents/cli.gateway";
 
@@ -36,7 +37,7 @@ describe("buildCodexInvocation", () => {
     });
 
     expect(invocation.args).toContain('mcp_servers.reportes.command="python3"');
-    expect(invocation.args).toContain('mcp_servers.reportes.args=["/tmp/services/mcp-reportes/server.py"]');
+    expect(invocation.args).toContain(`mcp_servers.reportes.args=${JSON.stringify([resolve("/tmp/triage-backend", "../services/mcp-reportes/server.py")])}`);
     expect(invocation.args).toContain("mcp_servers.reportes.required=true");
   });
 
