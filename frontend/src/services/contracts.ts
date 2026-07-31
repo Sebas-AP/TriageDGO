@@ -1,6 +1,7 @@
 import type {
   AdminEvent,
   AdminUser,
+  ManagedAdminUser,
   FollowUpInput,
   LocationValue,
   MapSuggestion,
@@ -10,12 +11,16 @@ import type {
   ReportRecord,
   ReportSubmission,
   SubmissionResult,
+  ClarificationRequest,
+  ClarificationResponse,
 } from "../types";
 
 export interface ReportService {
   submit(input: ReportSubmission): Promise<SubmissionResult>;
-  requestClarification(description: string, revision: number): Promise<{ question: string | null; revision: number }>;
+  requestClarification(input: ClarificationRequest | string, revision?: number): Promise<ClarificationResponse | { question: string | null; revision: number }>;
   getPublicReport(folio: string): Promise<ReportRecord | null>;
+  listMine(): Promise<ReportRecord[]>;
+  getMine(reportId: string): Promise<ReportRecord | null>;
 }
 
 export interface MapService {
@@ -29,6 +34,9 @@ export interface RealtimeService {
 }
 
 export interface AdminService {
+  listUsers(): Promise<ManagedAdminUser[]>;
+  createUser(input: { email: string; password: string; name: string; areas: string[]; accessLevel: "operator" | "coordinator" }): Promise<ManagedAdminUser>;
+  setUserActive(userId: string, active: boolean): Promise<ManagedAdminUser>;
   listClusters(): Promise<ProblemCluster[]>;
   updateStatus(reportId: string, status: OperationalStatus, note?: string): Promise<ReportRecord>;
   assign(reportId: string, assignee: string, team: string): Promise<ReportRecord>;

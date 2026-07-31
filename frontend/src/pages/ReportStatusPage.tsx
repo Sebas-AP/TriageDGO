@@ -29,6 +29,7 @@ export default function ReportStatusPage() {
         {!isLoading && !data && <p>No encontramos un reporte con este folio.</p>}
         <div className="status-actions">
           <Link className="primary-button" to="/">Crear otro reporte</Link>
+          <Link className="secondary-button" to="/mis-reportes">Mis reportes</Link>
           <Link className="secondary-button" to="/admin/login">Ver consola demo</Link>
         </div>
       </section>

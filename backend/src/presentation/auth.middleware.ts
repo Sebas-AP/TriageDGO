@@ -10,5 +10,5 @@ export async function firebasePrincipal(headers: { authorization?: string }): Pr
   const decoded = await getAuth(getApps()[0]).verifyIdToken(token);
   const role = decoded.role === "admin" ? "admin" : "invitado";
   if (role === "invitado" && decoded.firebase?.sign_in_provider !== "anonymous" && decoded.role !== "invitado") throw new Error("FORBIDDEN");
-  return { uid: decoded.uid, role, areas: Array.isArray(decoded.areas) ? decoded.areas.filter((x): x is string => typeof x === "string") : [] };
+  return { uid: decoded.uid, role, areas: Array.isArray(decoded.areas) ? decoded.areas.filter((x): x is string => typeof x === "string") : [], accessLevel: decoded.accessLevel === "coordinator" ? "coordinator" : "operator" };
 }

@@ -24,6 +24,8 @@ export class InMemoryTriageStore implements TriageStore {
     return { report, job };
   }
   async getReport(id: string) { return this.reports.get(id); }
+  async listReports() { return [...this.reports.values()].sort((a, b) => b.created_at.localeCompare(a.created_at)); }
+  async updateReport(id: string, update: Partial<Pick<Report, "area_responsable" | "asignado_a" | "progreso" | "prioridad" | "notas">>) { const report = this.reports.get(id); if (!report) return undefined; Object.assign(report, update); return report; }
   async claimJob(now: Date) {
     const job = [...this.jobs.values()].find((candidate) => ["encolado", "reintento"].includes(candidate.estado) && new Date(candidate.available_at) <= now);
     if (!job) return undefined;

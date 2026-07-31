@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { apiServices } from "./api";
 
 vi.mock("../lib/firebase", () => ({
-  firebaseAuth: vi.fn(),
+  firebaseAuth: vi.fn(() => ({ currentUser: { getIdToken: vi.fn().mockResolvedValue("guest-token") } })),
 }));
 
 describe("servicios API de reportes", () => {
@@ -53,5 +53,27 @@ describe("servicios API de reportes", () => {
     await expect(
       apiServices.reports.requestClarification("Hay un bache grande frente a la escuela.", 2),
     ).rejects.toThrow("La fotografía no cumple los requisitos.");
+  });
+
+  it("mantiene la sesión ciudadana al pedir aclaraciones y serializa respuestas acumuladas", async () => {
+    const token = { getIdToken: vi.fn().mockResolvedValue("guest-token") };
+    const { firebaseAuth } = await import("../lib/firebase");
+    vi.mocked(firebaseAuth).mockReturnValue({ currentUser: token } as never);
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ sessionId: "clar-1", complete: false, questions: ["¿Hay riesgo?"] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiServices.reports.requestClarification({ description: "Hay un bache grande frente a la escuela.", answers: [{ question: "¿Qué tamaño?", answer: "No lo sé" }] })).resolves.toMatchObject({ sessionId: "clar-1" });
+    const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain("/reportes/aclarificacion");
+    expect(request.headers).toMatchObject({ Authorization: "Bearer guest-token" });
+    expect(JSON.parse(String(request.body))).toEqual({ description: "Hay un bache grande frente a la escuela.", answers: [{ question: "¿Qué tamaño?", answer: "No lo sé" }] });
+  });
+
+  it("consulta sólo los reportes de la sesión ciudadana", async () => {
+    const token = { getIdToken: vi.fn().mockResolvedValue("guest-token") };
+    const { firebaseAuth } = await import("../lib/firebase");
+    vi.mocked(firebaseAuth).mockReturnValue({ currentUser: token } as never);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ reports: [{ id: "r-1", folio: "r-1", status: "assigned", createdAt: "2026-01-01", location: { address: "Centro", lat: 24, lng: -104 } }] }), { status: 200 })));
+    await expect(apiServices.reports.listMine()).resolves.toHaveLength(1);
   });
 });

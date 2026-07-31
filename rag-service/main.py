@@ -58,21 +58,28 @@ class FirestoreSource:
         self.db = firestore.client()
 
     def confirmed_reports(self) -> list[dict[str, Any]]:
-        tickets = {row.get("reporte_id"): row for row in (doc.to_dict() for doc in self.db.collection("tickets").stream())}
+        # Accept current snake_case fields and legacy camelCase emulator records.
+        tickets = {
+            row.get("reporte_id") or row.get("reporteId"): row
+            for row in (doc.to_dict() for doc in self.db.collection("tickets").stream())
+        }
         rows: list[dict[str, Any]] = []
         for doc in self.db.collection("reportes").where("estado", "==", "completado").stream():
             report = doc.to_dict()
-            ticket = tickets.get(report.get("reporte_id"))
+            reporte_id = report.get("reporte_id") or doc.id
+            ticket = tickets.get(reporte_id)
             if ticket:
-                rows.append({**report, "categoria": ticket.get("categoria", "revision_manual")})
+                rows.append({**report, "reporte_id": reporte_id, "categoria": ticket.get("categoria", report.get("categoria", "revision_manual"))})
         return rows
 
     def confirmed_report(self, reporte_id: str) -> dict[str, Any] | None:
         report_doc = self.db.collection("reportes").doc(reporte_id).get()
         if not report_doc.exists or report_doc.to_dict().get("estado") != "completado": return None
         tickets = self.db.collection("tickets").where("reporte_id", "==", reporte_id).limit(1).get()
+        if not tickets:
+            tickets = self.db.collection("tickets").where("reporteId", "==", reporte_id).limit(1).get()
         if not tickets: return None
-        return {**report_doc.to_dict(), "categoria": tickets[0].to_dict().get("categoria", "revision_manual")}
+        return {**report_doc.to_dict(), "reporte_id": reporte_id, "categoria": tickets[0].to_dict().get("categoria", "revision_manual")}
 
     def predial(self) -> list[dict[str, Any]]:
         return [{"id": doc.id, **doc.to_dict()} for doc in self.db.collection("predial").stream()]

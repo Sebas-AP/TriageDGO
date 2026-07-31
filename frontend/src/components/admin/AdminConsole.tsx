@@ -10,8 +10,9 @@ import { InboxView } from "./InboxView";
 import { FollowUpsView, HistoryView, MapView, PatternsView } from "./OperationalViews";
 import { ReportDetail } from "./ReportDetail";
 import { isActive, isOverdue } from "./adminUi";
+import { UserManagementView } from "./UserManagementView";
 
-type AdminView = "dashboard" | "inbox" | "followups" | "patterns" | "map" | "history";
+type AdminView = "dashboard" | "inbox" | "followups" | "patterns" | "map" | "history" | "users";
 
 const navItems: Array<{ id: AdminView; label: string; icon: IconName }> = [
   { id: "dashboard", label: "Resumen operativo", icon: "dashboard" },
@@ -20,6 +21,7 @@ const navItems: Array<{ id: AdminView; label: string; icon: IconName }> = [
   { id: "patterns", label: "Problemas frecuentes", icon: "pattern" },
   { id: "map", label: "Mapa operativo", icon: "map" },
   { id: "history", label: "Históricos", icon: "history" },
+  { id: "users", label: "Equipo y accesos", icon: "dashboard" },
 ];
 
 function updateFromEvent(records: ReportRecord[], event: AdminEvent) {
@@ -49,15 +51,15 @@ export default function AdminConsole() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([services.realtime.listReports(), services.admin.listClusters()])
-      .then(([reportItems, clusterItems]) => {
+    services.realtime.listReports()
+      .then((reportItems) => {
         if (!active) return;
         setReports(reportItems);
-        setClusters(clusterItems);
         setSelectedId(reportItems.find((report) => isActive(report.operationalStatus))?.id || "");
         setLoading(false);
       })
       .catch(() => setLoading(false));
+    services.admin.listClusters().then((clusterItems) => active && setClusters(clusterItems)).catch(() => undefined);
     const unsubscribe = services.realtime.subscribe(
       (event) => {
         setConnection("live");
@@ -140,6 +142,7 @@ export default function AdminConsole() {
           ))}
           <p>CONSULTA</p>
           {navItems.slice(5).map((item) => (
+            (item.id !== "users" || user?.accessLevel === "coordinator") &&
             <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => navigate(item.id)}>
               <span><Icon name={item.icon} /></span><em>{item.label}</em>
             </button>
@@ -147,7 +150,7 @@ export default function AdminConsole() {
         </nav>
         <div className="ops-sidebar-bottom">
           {config.mode === "demo" && <button className="reset-demo" onClick={() => setConfirmReset(true)}><Icon name="refresh" /> Restablecer demo</button>}
-          <div className="ops-user"><span>{user?.email.charAt(0).toUpperCase()}</span><div><strong>{user?.email}</strong><small>Administrador</small></div><button onClick={() => void logout()} title="Cerrar sesión"><Icon name="logout" /></button></div>
+          <div className="ops-user"><span>{user?.email.charAt(0).toUpperCase()}</span><div><strong>{user?.email}</strong><small>{user?.accessLevel === "coordinator" ? "Coordinación" : "Operador"}</small></div><button onClick={() => void logout()} title="Cerrar sesión"><Icon name="logout" /></button></div>
         </div>
       </aside>
 
@@ -168,12 +171,13 @@ export default function AdminConsole() {
         </header>
 
         <div key={view} className="view-transition">
-          {view === "dashboard" && <DashboardView reports={reports} clusters={clusters} onOpenReport={openReport} onNavigate={(next) => navigate(next)} />}
+          {view === "dashboard" && <DashboardView reports={reports} clusters={clusters} coordinator={user?.accessLevel === "coordinator"} onOpenReport={openReport} onNavigate={(next) => navigate(next)} />}
           {view === "inbox" && <InboxView reports={reports} selectedId={selectedId} onSelect={setSelectedId} onUpdated={updateReport} />}
           {view === "followups" && <FollowUpsView reports={reports} onOpenReport={openReport} onUpdated={updateReport} />}
           {view === "patterns" && <PatternsView reports={reports} clusters={clusters} onClustersChanged={setClusters} onOpenReport={openReport} />}
           {view === "map" && <MapView reports={reports} clusters={clusters} onOpenReport={openReport} />}
           {view === "history" && <HistoryView reports={reports} onOpenReport={openReport} />}
+          {view === "users" && <UserManagementView areas={user?.areas || []} />}
         </div>
       </section>
 

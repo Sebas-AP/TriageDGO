@@ -3,6 +3,7 @@ import {
   onAuthStateChanged,
   setPersistence,
   signInWithEmailAndPassword,
+  signInAnonymously,
   signOut,
   type User,
 } from "firebase/auth";
@@ -11,6 +12,7 @@ import { firebaseAuth } from "../lib/firebase";
 import type {
   AdminEvent,
   AdminUser,
+  ManagedAdminUser,
   FollowUpInput,
   LocationValue,
   MapSuggestion,
@@ -19,6 +21,8 @@ import type {
   ProblemCluster,
   ReportRecord,
   ReportSubmission,
+  ClarificationRequest,
+  ClarificationResponse,
 } from "../types";
 import type { AdminService, AuthService, MapService, RealtimeService, ReportService, Services } from "./contracts";
 
@@ -44,12 +48,38 @@ async function authHeaders(): Promise<HeadersInit> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function toAdminUser(user: User): AdminUser {
-  return { uid: user.uid, email: user.email || "admin", role: "admin" };
+function toAdminUser(user: User, claims?: Record<string, unknown>): AdminUser {
+  return { uid: user.uid, email: user.email || "admin", role: "admin", accessLevel: claims?.accessLevel === "coordinator" ? "coordinator" : "operator", areas: Array.isArray(claims?.areas) ? claims.areas.filter((area): area is string => typeof area === "string") : [] };
+}
+
+async function ensureCitizen() {
+  const instance = firebaseAuth();
+  if (!instance.currentUser) {
+    try {
+      await setPersistence(instance, browserLocalPersistence);
+      await signInAnonymously(instance);
+    } catch (cause) {
+      const code = typeof cause === "object" && cause !== null && "code" in cause ? String(cause.code) : "";
+      if (code.includes("api-key-not-valid")) {
+        throw new Error("La configuración de Firebase del frontend no tiene una API key válida. Configura VITE_FIREBASE_API_KEY y reinicia Vite.");
+      }
+      if (code.includes("operation-not-allowed")) {
+        throw new Error("Activa el proveedor Anonymous en Firebase Authentication para permitir el acceso como invitado.");
+      }
+      throw cause;
+    }
+  }
+}
+
+function toReport(record: { id: string; folio: string; status: string; createdAt: string; location: LocationValue; description?: string; area?: string; category?: string; priority?: Priority; assigneeId?: string }): ReportRecord {
+  const operationalStatus: Record<string, ReportRecord["operationalStatus"]> = { received: "new", processing: "review", ready: "review", failed: "review", assigned: "assigned", in_progress: "in_progress", resolved: "resolved" };
+  const ticket = record.category && record.area && record.priority ? { id: `ticket-${record.id}`, folio: record.folio, priority: record.priority, area: record.area, category: record.category, patternDetected: false, triggeredRule: "Clasificación automática", acknowledgmentSent: false, manualReview: record.status === "failed" } : undefined;
+  return { id: record.id, folio: record.folio, citizenName: "", phone: "", description: record.description || "Reporte ciudadano", location: record.location, status: record.status === "resolved" ? "ready" : record.status === "assigned" || record.status === "in_progress" ? "processing" : record.status === "failed" ? "failed" : "received", operationalStatus: operationalStatus[record.status] || "review", channel: "form", createdAt: record.createdAt, updatedAt: record.createdAt, assignee: record.assigneeId, team: record.area, agents: { classifier: { agent: "classifier", status: ticket ? "done" : "pending" }, pattern: { agent: "pattern", status: ticket ? "done" : "pending" }, acuse: { agent: "acuse", status: ticket ? "done" : "pending" } }, ticket, similarReports: [], followUps: [], notes: [], auditLog: [] };
 }
 
 const reports: ReportService = {
   async submit(input: ReportSubmission) {
+    await ensureCitizen();
     const form = new FormData();
     form.set("citizenName", input.citizenName);
     form.set("phone", input.phone);
@@ -57,41 +87,64 @@ const reports: ReportService = {
     form.set("description", input.description);
     form.set("location", JSON.stringify(input.location));
     if (input.clarificationAnswer) form.set("clarificationAnswer", input.clarificationAnswer);
+    if (input.clarificationAnswers) form.set("answers", JSON.stringify(input.clarificationAnswers));
     if (input.photo) form.set("photo", input.photo);
     return responseJson(
       await fetch(`${config.apiBaseUrl}/reportes/ingesta`, {
         method: "POST",
-        headers: { "Idempotency-Key": input.idempotencyKey || createIdempotencyKey() },
+        headers: { "Idempotency-Key": input.idempotencyKey || createIdempotencyKey(), ...(await authHeaders()) },
         body: form,
       }),
     );
   },
-  async requestClarification(description, revision) {
-    return responseJson(
-      await fetch(`${config.apiBaseUrl}/reportes/clarificacion`, {
+  async requestClarification(input: ClarificationRequest | string, revision?: number) {
+    await ensureCitizen();
+    const body = typeof input === "string" ? { description: input, revision } : input;
+    return responseJson<ClarificationResponse>(
+      await fetch(`${config.apiBaseUrl}/reportes/aclarificacion`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description, revision }),
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify(body),
       }),
     );
   },
   async getPublicReport(folio) {
     const response = await fetch(`${config.apiBaseUrl}/reportes/${encodeURIComponent(folio)}`);
     if (response.status === 404) return null;
-    return responseJson(response);
+    return toReport(await responseJson(response));
+  },
+  async listMine() {
+    await ensureCitizen();
+    const data = await responseJson<{ reports: Array<{ id: string; folio: string; status: string; createdAt: string; location: LocationValue }> }>(await fetch(`${config.apiBaseUrl}/ciudadano/reportes`, { headers: await authHeaders() }));
+    return data.reports.map(toReport);
+  },
+  async getMine(reportId) {
+    await ensureCitizen();
+    const response = await fetch(`${config.apiBaseUrl}/ciudadano/reportes/${encodeURIComponent(reportId)}`, { headers: await authHeaders() });
+    if (response.status === 404) return null;
+    return toReport(await responseJson(response));
   },
 };
 
 const maps: MapService = {
   async autocomplete(query, signal) {
-    return responseJson<MapSuggestion[]>(
+    const payload = await responseJson<unknown>(
       await fetch(`${config.apiBaseUrl}/maps/autocomplete?q=${encodeURIComponent(query)}`, { signal }),
     );
+    if (Array.isArray(payload)) return payload as MapSuggestion[];
+    if (typeof payload === "object" && payload !== null && "predictions" in payload && Array.isArray(payload.predictions)) {
+      return payload.predictions as MapSuggestion[];
+    }
+    return [];
   },
   async geocode(placeId) {
-    return responseJson<LocationValue>(
+    const payload = await responseJson<unknown>(
       await fetch(`${config.apiBaseUrl}/maps/geocode?placeId=${encodeURIComponent(placeId)}`),
     );
+    if (typeof payload === "object" && payload !== null && "lat" in payload && "lng" in payload && "address" in payload) {
+      return payload as LocationValue;
+    }
+    throw new Error("No encontramos esa ubicación. Puedes marcar el punto directamente en el mapa.");
   },
 };
 
@@ -119,8 +172,11 @@ async function consumeSse(
         if (line.startsWith("data:")) data += line.slice(5).trim();
       }
       if (data) {
-        listener(JSON.parse(data) as AdminEvent);
-        if (id) setLastEventId(id);
+        const event = JSON.parse(data) as Partial<AdminEvent>;
+        if (typeof event.type === "string" && typeof event.eventId === "string" && typeof event.reportId === "string" && typeof event.timestamp === "string") {
+          listener(event as AdminEvent);
+          if (id) setLastEventId(id);
+        }
       }
     }
   }
@@ -128,9 +184,10 @@ async function consumeSse(
 
 const realtime: RealtimeService = {
   async listReports() {
-    return responseJson<ReportRecord[]>(
+    const data = await responseJson<{ reports: Array<{ id: string; folio: string; status: string; createdAt: string; location: LocationValue; description: string; area?: string; assigneeId?: string }> }>(
       await fetch(`${config.apiBaseUrl}/admin/reportes`, { headers: await authHeaders() }),
     );
+    return data.reports.map(toReport);
   },
   subscribe(listener, onError) {
     const controller = new AbortController();
@@ -172,18 +229,18 @@ const auth: AuthService = {
     const user = firebaseAuth().currentUser;
     if (!user) return null;
     const token = await user.getIdTokenResult();
-    return token.claims.admin === true ? toAdminUser(user) : null;
+    return token.claims.role === "admin" ? toAdminUser(user, token.claims) : null;
   },
   async login(email, password) {
     const instance = firebaseAuth();
     await setPersistence(instance, browserLocalPersistence);
     const credential = await signInWithEmailAndPassword(instance, email, password);
     const token = await credential.user.getIdTokenResult(true);
-    if (token.claims.admin !== true) {
+    if (token.claims.role !== "admin") {
       await signOut(instance);
       throw new Error("La cuenta no tiene permisos de administrador.");
     }
-    return toAdminUser(credential.user);
+    return toAdminUser(credential.user, token.claims);
   },
   async logout() {
     await signOut(firebaseAuth());
@@ -195,7 +252,7 @@ const auth: AuthService = {
     return onAuthStateChanged(firebaseAuth(), async (user) => {
       if (!user) return listener(null);
       const token = await user.getIdTokenResult();
-      listener(token.claims.admin === true ? toAdminUser(user) : null);
+      listener(token.claims.role === "admin" ? toAdminUser(user, token.claims) : null);
     });
   },
 };
@@ -211,16 +268,18 @@ async function adminMutation<T>(path: string, body: unknown, method = "PATCH") {
 }
 
 const admin: AdminService = {
+  async listUsers() { return (await responseJson<{ users: ManagedAdminUser[] }>(await fetch(`${config.apiBaseUrl}/admin/usuarios`, { headers: await authHeaders() }))).users; },
+  async createUser(input) { return (await adminMutation<{ user: ManagedAdminUser }>("/admin/usuarios", input, "POST")).user; },
+  async setUserActive(userId, active) { return (await adminMutation<{ user: ManagedAdminUser }>(`/admin/usuarios/${encodeURIComponent(userId)}/estado`, { active })).user; },
   async listClusters() {
-    return responseJson<ProblemCluster[]>(
-      await fetch(`${config.apiBaseUrl}/admin/patrones`, { headers: await authHeaders() }),
-    );
+    return [];
   },
   updateStatus(reportId: string, status: OperationalStatus, note?: string) {
-    return adminMutation<ReportRecord>(`/admin/reportes/${reportId}/estado`, { status, note });
+    const progress: Record<OperationalStatus, string> = { new: "recibido", review: "en_analisis", assigned: "asignado", in_progress: "en_atencion", resolved: "resuelto", closed: "cerrado", duplicate: "cerrado", cancelled: "cerrado" };
+    return adminMutation<{ report: { id: string; folio: string; status: string; createdAt: string; location: LocationValue; description?: string; area?: string; assigneeId?: string } }>(`/admin/reportes/${reportId}`, { progress: progress[status], ...(note ? { note } : {}) }).then((data) => toReport(data.report));
   },
   assign(reportId: string, assignee: string, team: string) {
-    return adminMutation<ReportRecord>(`/admin/reportes/${reportId}/asignacion`, { assignee, team });
+    return adminMutation<{ report: { id: string; folio: string; status: string; createdAt: string; location: LocationValue; description: string; area?: string; assigneeId?: string } }>(`/admin/reportes/${reportId}/asignacion`, { assigneeId: assignee, area: team }).then((data) => toReport(data.report));
   },
   scheduleFollowUp(reportId: string, input: FollowUpInput) {
     return adminMutation<ReportRecord>(`/admin/reportes/${reportId}/seguimientos`, input, "POST");
@@ -229,10 +288,10 @@ const admin: AdminService = {
     return adminMutation<ReportRecord>(`/admin/reportes/${reportId}/seguimientos/${followUpId}`, { completed: true });
   },
   addNote(reportId: string, text: string) {
-    return adminMutation<ReportRecord>(`/admin/reportes/${reportId}/notas`, { text }, "POST");
+    return adminMutation<{ report: { id: string; folio: string; status: string; createdAt: string; location: LocationValue; description?: string; area?: string; assigneeId?: string } }>(`/admin/reportes/${reportId}`, { note: text }).then((data) => toReport(data.report));
   },
   changePriority(reportId: string, priority: Priority, reason: string) {
-    return adminMutation<ReportRecord>(`/admin/reportes/${reportId}/prioridad`, { priority, reason });
+    return adminMutation<{ report: { id: string; folio: string; status: string; createdAt: string; location: LocationValue; description?: string; area?: string; assigneeId?: string } }>(`/admin/reportes/${reportId}`, { priority, note: reason }).then((data) => toReport(data.report));
   },
   createMasterIncident(clusterId: string, owner: string) {
     return adminMutation<ProblemCluster>(`/admin/patrones/${clusterId}/incidencia`, { owner }, "POST");

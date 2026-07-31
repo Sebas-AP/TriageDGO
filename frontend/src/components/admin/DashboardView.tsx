@@ -14,11 +14,13 @@ export function DashboardView({
   clusters,
   onOpenReport,
   onNavigate,
+  coordinator = false,
 }: {
   reports: ReportRecord[];
   clusters: ProblemCluster[];
   onOpenReport: (id: string) => void;
   onNavigate: (view: "inbox" | "followups" | "patterns") => void;
+  coordinator?: boolean;
 }) {
   const active = reports.filter((report) => isActive(report.operationalStatus));
   const today = new Date().toDateString();
@@ -83,6 +85,8 @@ export function DashboardView({
           <span className="metric-index">05</span><span className="metric-icon"><Icon name="pattern" /></span><small>Inteligencia territorial</small><strong>{clusters.filter((cluster) => cluster.status !== "resolved").length}</strong><em>Patrones activos</em>
         </button>
       </section>
+
+      {coordinator && <section className="ops-insight" aria-label="Indicadores de escenario"><span>◈</span><div><strong>Escenario de coordinación · maqueta</strong><p>Presupuesto comprometido: $1.24 M · Ejercicio estimado: 68%. Estos indicadores son de demostración y no provienen del sistema operativo.</p></div></section>}
 
       <div className="dashboard-columns">
         <section className="ops-panel urgent-panel">
