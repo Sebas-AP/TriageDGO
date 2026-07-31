@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && (request.auth.token.role == 'admin' || request.auth.token.rol == 'admin' || request.auth.token.admin == true); }
+    function owner(reporteId) {
+      return signedIn() && firestore.exists(/databases/(default)/documents/reportes/$(reporteId))
+        && firestore.get(/databases/(default)/documents/reportes/$(reporteId)).data.ciudadano_id == request.auth.uid;
+    }
+    function validImage() { return request.resource.size <= 5 * 1024 * 1024 && request.resource.contentType.matches('image/(jpeg|png|webp)'); }
+    function validAudio() { return request.resource.size <= 10 * 1024 * 1024 && request.resource.contentType.matches('audio/.*'); }
+    match /evidencias/{reporteId}/{fileName} {
+      allow read: if admin() || owner(reporteId);
+      allow write: if (admin() || owner(reporteId)) && validImage();
+    }
+    match /audio/{reporteId}/{fileName} {
+      allow read: if admin();
+      allow write: if admin() && validAudio();
+    }
+  }
+}

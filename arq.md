@@ -1,5 +1,9 @@
 # Arquitectura de Software — Sistema de Triage Inteligente 072
 
+> Estado operativo: las referencias históricas a `claude -p` en este documento
+> fueron sustituidas en la aplicación por `codex exec --model gpt-5.6-luna`,
+> con `--output-schema` y el MCP `reportes` configurado desde el runner.
+
 **Base:** Reto 03 · Capstone DuranIA (supervisor + 3 subagentes en paralelo + MCP)
 **Extensión:** entrada multicanal (formulario wizard, WhatsApp, llamada), agente de evidencias, roles ciudadano/admin, RAG de reportes y de pagos.
 **Stack impuesto:** Frontend React · Backend Express (monolito) · BD y Storage Firebase · Transcripción vía API Whisper · Arquitectura de 3 capas.
@@ -30,7 +34,7 @@ Todo lo demás (orquestación del supervisor, controllers, reglas de arbitraje, 
 │  Controllers → Orquestador Supervisor → Procesos claude-p (agentes)│
 │  Servicios: Ingesta, Prioridad dinámica, Notificación             │
 │  Agent-runner: invocación de CLI `claude` para cada subagente      │
-└───────┬───────────────┬───────────────┬───────────────┬───────────┘
+└───────┬───────────────┬───────────────┬───────────────┬───────────┘2
         │ MCP (agentes  │ MCP           │ MCP           │ HTTP
         │ en sesión)    │ (supervisor)  │ (supervisor)  │
         ▼                ▼               ▼               ▼
@@ -41,11 +45,12 @@ Todo lo demás (orquestación del supervisor, controllers, reglas de arbitraje, 
 └──────┬───────┘ └───────┬───────┘ └──────┬───────┘ └────────┬─────────┘
        │ stdin/stdout      │                │                  │
        │ (JSON)            ▼                ▼                  ▼
-       │           ┌───────────────────────────────┐
-       │           │     MCP Google Maps           │
-       │           │     (geocodificación, lugares)│
-       └──────────▶│                               │
-                   └───────────────────────────────┘
+       │           ┌────────────────────────────────────┐
+       │           │          MCP Google Maps            │
+       │           │ (geocodificación, lugares cercanos, │
+       │           │  búsqueda de lugar por texto libre) │
+       └──────────▶│                                      │
+                   └────────────────────────────────────┘
                              ▼
 ┌───────────────────────────────────────────────────────────────────┐
 │                         CAPA DE DATOS                              │
@@ -78,21 +83,22 @@ Todo lo demás (orquestación del supervisor, controllers, reglas de arbitraje, 
       ▼                ▼                  ▼
 ┌──────────────────────────────────────────────────────┐
 │ Adaptador de canal (normaliza a "ReporteCrudo")        │
-│  - Form:      texto ya estructurado                   │
+│  - Form:      texto + coordenadas ya estructurados     │
 │  - WhatsApp:  texto/imagen/audio de voz → si hay audio,│
 │               se manda a Whisper API para transcribir  │
-│  - Llamada:   audio completo de la llamada → Whisper   │
-│               API → texto                              │
+│  - Llamada:   grabación de incidente + grabación de    │
+│               ubicación (2 pasos IVR) → Whisper API →  │
+│               texto → MCP Maps `buscar_lugar` → coords │
 └───────────────────────┬────────────────────────────────┘
                          ▼
               POST /reportes/ingesta (interno)
 ```
 
-- **WhatsApp**: Twilio recibe el mensaje → webhook `POST /webhooks/whatsapp` en Express → si el mensaje trae una nota de voz o el ciudadano llama dentro del hilo, el audio se descarga de la URL de Twilio y se envía a **Whisper API** para transcripción antes de entrar al pipeline.
-- **Llamada**: Twilio Voice contesta con un flujo IVR simple ("cuéntenos qué pasó, ubicación aproximada") y graba; al finalizar, el webhook `POST /webhooks/voz` recibe la URL de la grabación → Whisper API transcribe → se arma el `ReporteCrudo` igual que los otros canales.
-- **Formulario**: ya llega estructurado (nombre, ubicación, descripción, adjuntos), no pasa por Whisper.
+- **WhatsApp**: Twilio recibe el mensaje → webhook `POST /webhooks/whatsapp` en Express → si el mensaje trae una nota de voz o el ciudadano llama dentro del hilo, el audio se descarga de la URL de Twilio y se envía a **Whisper API** para transcripción antes de entrar al pipeline. Si la nota de voz describe la ubicación en texto libre (en vez de compartir un pin de ubicación de WhatsApp), el adaptador resuelve las coordenadas igual que en el canal de llamada (ver abajo).
+- **Llamada**: Twilio Voice usa un IVR de **dos pasos** en vez de una sola grabación combinada: (1) "cuéntenos qué pasó" → graba y transcribe el incidente, (2) "¿en qué calle o cerca de qué se ubica?" → graba y transcribe la ubicación por separado. Separar ambos pasos evita que la descripción del incidente contamine la búsqueda de lugar. El texto del paso 2 se envía tal cual (sin geocodificar direcciones "a mano") al tool `buscar_lugar` del **MCP Google Maps** (§4.3), que lo resuelve a coordenadas usando Google Places (Text Search) con sesgo geográfico al municipio del 072. El adaptador de canal (Express) invoca este tool **directamente** (no dentro de una sesión `claude -p`), igual que ya hace con MCP Reportes/Twilio para operaciones deterministas. Si `buscar_lugar` devuelve un solo candidato con confianza alta, se usa esa coordenada; si devuelve varios candidatos sin un ganador claro (o ninguno), el reporte se crea igualmente pero con `estado: "revision_manual"` y los candidatos se adjuntan al reporte para que el admin elija la ubicación correcta desde la consola (mismo mecanismo que ya existe para fallos de subagente, Regla 3 en §3.1) — la llamada nunca se bloquea ni se le pide al ciudadano repetir la ubicación en tiempo real.
+- **Formulario**: ya llega estructurado (nombre, ubicación con mapa + input, descripción, adjuntos), no pasa por Whisper ni por `buscar_lugar` — usa `geocodificar` solo si el ciudadano escribe una dirección en vez de mover el pin en el mapa.
 
-Este adaptador es lo único "consciente" del canal; a partir de aquí todo el pipeline multiagente es agnóstico al canal de origen.
+Este adaptador es lo único "consciente" del canal; a partir de aquí todo el pipeline multiagente es agnóstico al canal de origen. `coordenadas` sigue siendo un campo obligatorio de `ReportInput` (`backend/src/business/types.ts`) — para los canales de voz, el adaptador debe resolverlas (vía `buscar_lugar`) antes de llamar a `POST /reportes/ingesta`, nunca lo delega al pipeline multiagente.
 
 ---
 
@@ -269,8 +275,9 @@ Se implementan como **procesos MCP independientes** (aislamiento de credenciales
 - Aísla las credenciales de Twilio del resto del monolito.
 
 ### 4.3 MCP Google Maps
-- `geocodificar(direccion)` — usado por el wizard para convertir la ubicación escrita en lat/lon.
-- `distancia(lat, lon, destino)` / `lugares_cercanos(lat, lon, tipo)` — usado por el Clasificador/Supervisor para la Regla 2 (cercanía a escuela) y el modificador de "lugar público".
+- `geocodificar(direccion)` — usado por el wizard para convertir una dirección estructurada escrita en lat/lon (Geocoding API). Solo sirve para direcciones bien formadas; no está pensado para descripciones libres tipo "junto al mercado, frente a la primaria".
+- `buscar_lugar(descripcion, sesgo_ubicacion)` — resuelve una **descripción libre del lugar** (lo que dice o lo que hay cerca, ej. "la calle de la iglesia, cerca de la tienda de don Beto") a coordenadas, usando **Google Places API (Text Search / Find Place from Text)** en vez de Geocoding, porque tolera mejor lenguaje natural y referencias a comercios/puntos de interés en vez de direcciones formales. `sesgo_ubicacion` es obligatorio (centro + radio del municipio del 072) para no matchear lugares con nombre parecido en otra ciudad. Devuelve una lista de **candidatos** (`{nombre, coordenadas, confianza}`, no una sola coordenada "ganadora"), para que el llamador decida si hay ambigüedad. Es el tool que usa el adaptador del canal de llamada/WhatsApp-audio (§2.2) para resolver `coordenadas` a partir de la transcripción de Whisper.
+- `distancia(lat, lon, destino)` / `lugares_cercanos(lat, lon, tipo)` — usado por el Clasificador/Supervisor para la Regla 2 (cercanía a escuela) y el modificador de "lugar público". Distinto de `buscar_lugar`: aquí ya se conocen las coordenadas de origen y se busca qué hay alrededor; `buscar_lugar` es lo inverso (no se conocen las coordenadas, se infieren de una descripción).
 
 ---
 
@@ -303,7 +310,7 @@ Se implementan como **procesos MCP independientes** (aislamiento de credenciales
 
 | Colección | Contenido clave |
 |---|---|
-| `reportes` | reporte crudo + texto normalizado + canal de origen + coordenadas + ciudadano_id + estado |
+| `reportes` | reporte crudo + texto normalizado + canal de origen + coordenadas + ciudadano_id + estado (+ `candidatos_ubicacion` cuando `buscar_lugar` del MCP Maps no resolvió una coordenada única, para que el admin elija en consola) |
 | `tickets` | categoria, urgencia_final, prioridad_final, area, patron_detectado, regla_gatillada, acuse_enviado, revision_manual, escalar_a |
 | `usuarios` | perfil ciudadano/admin, rol (Firebase Auth custom claims) |
 | `predial` | estatus de pago por ubicación/clave catastral (fuente para el RAG de pagos) |
@@ -381,7 +388,8 @@ Ciudadano ─┬─(form)──────────────┐
 
 - **Claude Code (suscripción)**: costo **fijo** por suscripción, no marginal por token. Los 6 agentes de razonamiento están cubiertos. El monitor es **cuota de uso** (ventana de uso del plan), no gasto: `log_agentes` registra duración y exit code de cada invocación de agente para alertar si se aproxima al límite. Todos los agentes usan `haiku-4.5` por defecto (bajo consumo de cuota); excepciones documentadas en `log_agentes` si un agente requiere `opus-4.8`.
 - **Twilio**: costo por mensaje de WhatsApp y por minuto de llamada; el adaptador de canal debe registrar el costo estimado por reporte en `log_agentes` o en el propio ticket, para métricas por colonia/categoría que pide la Alcaldía.
-- **Whisper API**: costo por minuto de audio transcrito (sigue siendo externo, no cubierto por Claude Code); se recomienda limitar duración máxima de grabación en el IVR de Twilio.
+- **Whisper API**: costo por minuto de audio transcrito (sigue siendo externo, no cubierto por Claude Code); se recomienda limitar duración máxima de grabación en el IVR de Twilio. Al separar el IVR de llamada en dos pasos (incidente + ubicación, ver §2.2), son dos grabaciones cortas en vez de una larga — el costo total por llamada no debería cambiar significativamente.
+- **Google Maps (Places + Geocoding)**: costo por request más allá del crédito mensual gratuito de Google Cloud; `buscar_lugar` (Places Text Search) agrega una llamada por cada reporte de voz/audio (además de las ya contempladas para `lugares_cercanos`/`distancia` en los modificadores de prioridad). Vigilar volumen si el canal de llamada crece.
 - **RAG/embeddings**: correr el microservicio con el modelo pre-descargado (evita latencia de descarga en cada arranque, igual que sugiere el starter del reto).
 - **Predial**: el dato de pago de predial se usa solo como **contexto informativo** para la Dirección de Obras/Alcaldía (transparencia de recursos por colonia), nunca como criterio que retrase o niegue la atención de un reporte de riesgo.
 

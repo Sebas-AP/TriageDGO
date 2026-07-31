@@ -11,7 +11,7 @@ corrección semántica caso por caso — valida INTEROPERABILIDAD:
 - ¿cada uno devuelve JSON válido según su contrato?
 - ¿un fallo de un agente no tumba a los demás (Regla 3 / allSettled)?
 
-Reutiliza claude_p_async de starter.py — el mismo helper que usará el
+Reutiliza codex_exec_async de starter.py — el mismo helper que usará el
 supervisor real, en vez de reimplementar el paralelismo aquí.
 
 Uso:
@@ -31,7 +31,7 @@ PROMPTS_DIR = AGENTS_DIR / "prompts"
 CONTRACTS_DIR = AGENTS_DIR / "contracts"
 
 sys.path.insert(0, str(REPO_ROOT))
-from starter import claude_p_async  # mismo helper que usará el Supervisor real
+from starter import codex_exec_async  # mismo helper que usará el Supervisor real
 
 REPORTE_SMOKE = {
     "reporte_id": "SMOKE-01",
@@ -49,7 +49,7 @@ async def _invoke(agent_name: str) -> dict:
 
     system_prompt = prompt_path.read_text(encoding="utf-8")
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
-    return await claude_p_async(
+    return await codex_exec_async(
         json.dumps(REPORTE_SMOKE, ensure_ascii=False),
         system=system_prompt,
         schema=schema,

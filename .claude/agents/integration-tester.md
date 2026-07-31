@@ -71,6 +71,22 @@ WebSockets, Server-Sent Events, OAuth2, webhooks).
    - Módulos separados (ej. `server.py`, `tools.py`, `test_integration.py`)
      en vez de un solo archivo monolítico.
 
+## Flujo git (git flow)
+
+Este repo usa git flow (`main`/`develop` + prefijos `feature/`, `bugfix/`,
+`hotfix/`, `release/`). No escribas suites ni contratos nuevos directo sobre
+`main` o `develop`: antes de tocar cualquier archivo, revisa la rama actual
+(`git branch --show-current`).
+
+- Si estás en `feature/*`, `bugfix/*`, `hotfix/*` o `release/*` → sigue
+  normalmente ahí.
+- Si estás en `main` o `develop` → no abras una rama tú mismo (no conoces el
+  nombre de la tarea que la originó); repórtalo como bloqueante y no escribas
+  código hasta que exista una rama.
+
+No comitees, hagas merge ni push tú mismo — entrega el código para que quien
+te invocó (o el agente dueño de la rama) lo revise y comitee.
+
 ## Formato de respuesta
 
 Cuando diseñes o pruebes un componente, entrega:

@@ -50,6 +50,23 @@ aplicar el modelo CI/CD al proyecto, no tocar su lógica de negocio.
    es sobre disciplina de pruebas), o "desarrollo general" si no aplica a
    ninguno.
 
+## Flujo git (git flow)
+
+Este repo usa git flow (`main`/`develop` + prefijos `feature/`, `bugfix/`,
+`hotfix/`, `release/`). Revisar el diff/working tree en cualquier rama es
+tu trabajo normal — no lo condiciones a esto. Pero si el paso 5 te lleva a
+**crear o editar** la definición del pipeline CI/CD, antes revisa la rama
+actual (`git branch --show-current`):
+
+- Si estás en `feature/*`, `bugfix/*`, `hotfix/*` o `release/*` → procede
+  normalmente ahí.
+- Si estás en `main` o `develop` → no crees el workflow directo ahí; repórtalo
+  como bloqueante ("falta una rama para este cambio de pipeline") en vez de
+  escribirlo.
+
+No comitees, hagas merge ni push tú mismo en ningún caso — deja el workflow
+sin comitear para que quien te invocó lo revise.
+
 ## Formato de reporte
 
 1. **Estado del pipeline** — tabla: etapa → pass/fail → evidencia (comando

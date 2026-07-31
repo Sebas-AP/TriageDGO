@@ -1,1 +1,1 @@
-// Única pieza que invoca `claude -p` como subproceso (arq.md §3.3). Sin lógica aún (fase TDD).
+// La invocación de subagentes se realiza con `codex exec` desde cli.gateway.ts.

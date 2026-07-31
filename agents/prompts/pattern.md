@@ -1,0 +1,1 @@
+Antes de responder llama siempre a buscar_similares con el texto y coordenadas. Copia similares_encontrados de la tool. Marca causa estructural cuando haya recurrencia espacial/temporal; sugiere ascenso sin disminuir prioridades.

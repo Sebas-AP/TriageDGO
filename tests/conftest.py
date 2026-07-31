@@ -1,6 +1,4 @@
-"""Fixtures compartidas: mock de `claude_p`/`claude_p_async` para probar la
-orquestación (supervisor, reglas de arbitraje) sin invocar `claude -p` real
-(fase RED actual, ver CLAUDE.md)."""
+"""Fixtures compartidas: mock de Codex para probar la orquestación sin CLI real."""
 from __future__ import annotations
 
 import sys
@@ -38,24 +36,24 @@ def _agent_for_schema(schema: dict | None) -> str | None:
 
 
 @pytest.fixture
-def mock_claude_p(monkeypatch: pytest.MonkeyPatch):
-    """Reemplaza starter.claude_p / claude_p_async por respuestas FIJAS
+def mock_codex_exec(monkeypatch: pytest.MonkeyPatch):
+    """Reemplaza starter.codex_exec / codex_exec_async por respuestas FIJAS
     (EXAMPLE_OUTPUTS), determinadas por el `schema` pasado a cada llamada —
     igual que agents/tests/mock_mcp_server.py hace para `buscar_similares`."""
     import starter
 
     calls: list[dict[str, Any]] = []
 
-    def _fake_claude_p(prompt: str, system: str | None = None, schema: dict | None = None, timeout: int = 120):
+    def _fake_codex_exec(prompt: str, system: str | None = None, schema: dict | None = None, timeout: int = 120):
         agent = _agent_for_schema(schema)
         calls.append({"prompt": prompt, "system": system, "schema": schema, "agent": agent})
         if agent is None:
-            raise RuntimeError("mock_claude_p: no reconozco el schema recibido")
+            raise RuntimeError("mock_codex_exec: no reconozco el schema recibido")
         return EXAMPLE_OUTPUTS[agent]
 
-    async def _fake_claude_p_async(*args, **kwargs):
-        return _fake_claude_p(*args, **kwargs)
+    async def _fake_codex_exec_async(*args, **kwargs):
+        return _fake_codex_exec(*args, **kwargs)
 
-    monkeypatch.setattr(starter, "claude_p", _fake_claude_p)
-    monkeypatch.setattr(starter, "claude_p_async", _fake_claude_p_async)
+    monkeypatch.setattr(starter, "codex_exec", _fake_codex_exec)
+    monkeypatch.setattr(starter, "codex_exec_async", _fake_codex_exec_async)
     return calls

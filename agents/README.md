@@ -44,8 +44,24 @@ El motor real de similitud semántica (`sentence-transformers`, microservicio RA
 
 No hay dataset de imágenes reales en este repo todavía. Los casos de `agents/tests/cases/evidence.cases.json` son sintéticos y solo validan la **forma** del JSON de salida, no que el análisis visual sea correcto sobre una imagen real. Cuando exista un set de imágenes etiquetadas, ampliar esos casos con `expect_equals`/`expect_in` sobre `severidad`/`senales_detectadas` reales.
 
+## Agentes
+
+| Agente | Propósito | Salida (campos) | MCP | Prompt |
+|---|---|---|---|---|
+| `classifier` | Clasifica el reporte en categoría, urgencia base y área responsable | `categoria` (enum 10), `urgencia_base` (baja/media/alta/critica), `area_responsable`, `resumen`, `palabras_clave[]` | No | `prompts/classifier.md` |
+| `pattern` | Detecta patrones estructurales y reportes similares | `similares_encontrados` (int), `posible_causa_estructural` (bool), `ascenso_sugerido` (bool), `nota` | Sí (`buscar_similares`) | `prompts/pattern.md` |
+| `acuse` | Redacta mensaje de acuse al ciudadano | `mensaje` (string) | No | `prompts/acuse.md` |
+| `evidence` | Analiza foto/video adjunto, valida correspondencia y severidad | `corresponde_a_descripcion` (bool), `severidad` (enum), `senales_detectadas[]`, `etiqueta_contexto` | No | `prompts/evidence.md` |
+| `dedup` | Detecta si el reporte es duplicado de uno reciente | `duplicado_detectado` (bool), `reporte_id_original` (string/null), `confianza` (0-1), `justificacion` | No | `prompts/dedup.md` |
+| `escalation` | Decide si escalar a director de área | `debe_escalar` (bool), `director_area`, `mensaje_escalamiento`, `motivo` | No | `prompts/escalation.md` |
+
+Todos los agentes se ejecutan vía `codex exec` con el modelo configurado en
+`CODEX_MODEL` (default: `gpt-5.6-luna`). Cada agente es un archivo `.md`
+en `prompts/` con su system prompt, y su contrato de salida está definido
+en `contracts/*.schema.json`.
+
 ## Coherencia con `arq.md`
 
-- Modelo: todos los agentes usan `--model haiku-4.5` (ver `arq.md` §3.1, §3.3, §8).
+- Modelo: todos los agentes usan el modelo configurado en `CODEX_MODEL` (ver `arq.md` §3.1, §3.3, §8).
 - MCP dentro de la sesión: solo `pattern` (y potencialmente `evidence`/`escalation`) reciben `--mcp-config`; `classifier` y `acuse` no lo necesitan (ver `arq.md` §4).
 - Cada invocación es un proceso nuevo, sin estado persistente entre llamadas — el harness y la prueba de integración respetan esto (una llamada `claude -p` = un subproceso).

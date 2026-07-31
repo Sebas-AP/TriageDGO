@@ -17,7 +17,7 @@ REPORTE_EJEMPLO = {
 
 
 @pytest.mark.asyncio
-async def test_supervisor_delega_en_paralelo_y_consolida_un_ticket(mock_claude_p) -> None:
+async def test_supervisor_delega_en_paralelo_y_consolida_un_ticket(mock_codex_exec) -> None:
     resultado = await supervisor(REPORTE_EJEMPLO)
 
     assert "ticket_id" in resultado
@@ -27,20 +27,20 @@ async def test_supervisor_delega_en_paralelo_y_consolida_un_ticket(mock_claude_p
 
 
 @pytest.mark.asyncio
-async def test_supervisor_usa_haiku_4_5_para_cada_subagente(mock_claude_p) -> None:
+async def test_supervisor_usa_codex_para_cada_subagente(mock_codex_exec) -> None:
     await supervisor(REPORTE_EJEMPLO)
 
-    assert len(mock_claude_p) >= 3
-    agentes_llamados = {c["agent"] for c in mock_claude_p}
+    assert len(mock_codex_exec) >= 3
+    agentes_llamados = {c["agent"] for c in mock_codex_exec}
     assert {"classifier", "pattern", "acuse"} <= agentes_llamados
 
 
 @pytest.mark.asyncio
-async def test_supervisor_marca_revision_manual_si_un_subagente_falla(mock_claude_p, monkeypatch) -> None:
+async def test_supervisor_marca_revision_manual_si_un_subagente_falla(mock_codex_exec, monkeypatch) -> None:
     import starter
 
     async def _falla(*_args, **_kwargs):
-        raise RuntimeError("claude -p falló (timeout)")
+        raise RuntimeError("codex exec falló (timeout)")
 
     monkeypatch.setattr(starter, "subagente_detector", _falla)
 

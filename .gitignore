@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+.venv-rag/
 venv/
 
 # Node
@@ -22,9 +23,16 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 serviceAccountKey.json
+triage-dgo-firebase-adminsdk-*.json
 
 # Logs de agentes (trazabilidad, no versionar por volumen/PII)
 log_agentes.jsonl
+
+# Índices locales regenerables del servicio RAG
+.rag-index/
+
+# Presupuestos mensuales regenerables (salida de calcular_presupuesto_mensual.py)
+rag-service/data/presupuestos_mensuales/
 
 # Editor / OS
 .DS_Store

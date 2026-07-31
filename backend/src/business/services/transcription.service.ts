@@ -1,1 +1,38 @@
-// Llama Whisper API (externa) para transcribir audio (arq.md §2.2). Sin lógica aún (fase TDD).
+/** Interface for audio transcription clients. */
+export interface WhisperClient {
+  transcribir(audio: Buffer, fileName: string, contentType: string): Promise<{ texto: string; duracionSegundos?: number }>;
+}
+
+/** Service wrapper for audio transcription (Whisper API). */
+export class TranscriptionService {
+  constructor(private readonly client: WhisperClient) {}
+  transcribir(audio: Buffer, fileName: string, contentType: string) {
+    return this.client.transcribir(audio, fileName, contentType);
+  }
+}
+
+/** Placeholder client that throws when Whisper is not configured. */
+export class UnconfiguredWhisperClient implements WhisperClient {
+  async transcribir(): Promise<{ texto: string }> {
+    throw new Error("Whisper no está configurado: define WHISPER_API_KEY.");
+  }
+}
+
+/**
+ * Creates an HTTP client for OpenAI Whisper API.
+ *
+ * @param apiKey - OpenAI API key
+ * @param fetchFn - Optional fetch implementation (for testing)
+ */
+export function createWhisperHttpClient(apiKey: string, fetchFn: typeof fetch = fetch): WhisperClient {
+  return { async transcribir(audio, fileName, contentType) {
+    const body = new FormData();
+    body.append("model", "whisper-1");
+    body.append("file", new Blob([audio], { type: contentType }), fileName);
+    const response = await fetchFn("https://api.openai.com/v1/audio/transcriptions", { method: "POST", headers: { authorization: `Bearer ${apiKey}` }, body, signal: AbortSignal.timeout(30_000) });
+    if (!response.ok) throw new Error("Whisper no disponible.");
+    const payload = await response.json() as { text?: string };
+    if (!payload.text) throw new Error("Whisper devolvió una respuesta inválida.");
+    return { texto: payload.text };
+  } };
+}
