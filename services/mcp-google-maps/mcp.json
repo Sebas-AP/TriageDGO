@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "google-maps": {
+      "command": "python3",
+      "args": ["../services/mcp-google-maps/server.py"]
+    }
+  }
+}
