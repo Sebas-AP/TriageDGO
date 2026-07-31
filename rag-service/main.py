@@ -88,15 +88,19 @@ class FirestoreSource:
 class Vectorizer:
     def __init__(self) -> None:
         self._model: Any | None = None
+        self._use_local_fallback = False
 
     def encode(self, text: str) -> np.ndarray:
         # Tests and an emergency local environment remain deterministic without a model download.
-        try:
-            if self._model is None:
-                from sentence_transformers import SentenceTransformer
-                self._model = SentenceTransformer(os.getenv("RAG_MODEL", "all-MiniLM-L6-v2"))
-            vector = np.asarray(self._model.encode(text), dtype=np.float32)
-        except (ImportError, OSError, RuntimeError):
+        if not self._use_local_fallback:
+            try:
+                if self._model is None:
+                    from sentence_transformers import SentenceTransformer
+                    self._model = SentenceTransformer(os.getenv("RAG_MODEL", "all-MiniLM-L6-v2"))
+                vector = np.asarray(self._model.encode(text), dtype=np.float32)
+            except (ImportError, OSError, RuntimeError):
+                self._use_local_fallback = True
+        if self._use_local_fallback:
             vocabulary = sorted(tokens(text))[:64]
             vector = np.zeros(64, dtype=np.float32)
             for token in vocabulary:
