@@ -1,10 +1,29 @@
-export interface WhisperClient { transcribir(audio: Buffer, fileName: string, contentType: string): Promise<{ texto: string; duracionSegundos?: number }>; }
-export class TranscriptionService { constructor(private readonly client: WhisperClient) {} transcribir(audio: Buffer, fileName: string, contentType: string) { return this.client.transcribir(audio, fileName, contentType); } }
-
-export class UnconfiguredWhisperClient implements WhisperClient {
-  async transcribir(): Promise<{ texto: string }> { throw new Error("Whisper no está configurado: define WHISPER_API_KEY."); }
+/** Interface for audio transcription clients. */
+export interface WhisperClient {
+  transcribir(audio: Buffer, fileName: string, contentType: string): Promise<{ texto: string; duracionSegundos?: number }>;
 }
 
+/** Service wrapper for audio transcription (Whisper API). */
+export class TranscriptionService {
+  constructor(private readonly client: WhisperClient) {}
+  transcribir(audio: Buffer, fileName: string, contentType: string) {
+    return this.client.transcribir(audio, fileName, contentType);
+  }
+}
+
+/** Placeholder client that throws when Whisper is not configured. */
+export class UnconfiguredWhisperClient implements WhisperClient {
+  async transcribir(): Promise<{ texto: string }> {
+    throw new Error("Whisper no está configurado: define WHISPER_API_KEY.");
+  }
+}
+
+/**
+ * Creates an HTTP client for OpenAI Whisper API.
+ *
+ * @param apiKey - OpenAI API key
+ * @param fetchFn - Optional fetch implementation (for testing)
+ */
 export function createWhisperHttpClient(apiKey: string, fetchFn: typeof fetch = fetch): WhisperClient {
   return { async transcribir(audio, fileName, contentType) {
     const body = new FormData();

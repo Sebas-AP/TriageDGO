@@ -18,6 +18,7 @@ const IMAGE_SIGNATURES: Record<string, Buffer> = {
   "image/webp": Buffer.from("RIFF"),
 };
 
+/** Validates image file by checking magic bytes signature. */
 function isValidatedImage(file: Express.Multer.File): boolean {
   const signature = IMAGE_SIGNATURES[file.mimetype];
   if (!signature || !file.buffer.subarray(0, signature.length).equals(signature)) return false;
@@ -30,6 +31,18 @@ export interface IngestionControllerDependencies {
   authenticate: (request: Parameters<RequestHandler>[0]) => Promise<Principal>;
 }
 
+/**
+ * Creates the ingestion router for POST /reportes/ingesta.
+ *
+ * Handles:
+ * - Multipart form data with optional photo attachment
+ * - Image validation (magic bytes check)
+ * - Idempotency via Idempotency-Key header
+ * - Public submissions (invitado) and authenticated submissions (admin)
+ *
+ * @param deps - Ingestion service and authentication function
+ * @returns Express Router
+ */
 export function createIngestionController({ ingestion, authenticate }: IngestionControllerDependencies): Router {
   const router = Router();
   router.post("/", upload.single("photo"), async (request, response) => {

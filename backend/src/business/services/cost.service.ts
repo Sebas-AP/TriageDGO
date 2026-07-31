@@ -10,7 +10,7 @@ export interface AttentionCost {
   breakdown: { whatsapp: number; voice: number; transcription: number };
 }
 
-// Valores configurables y deliberadamente explícitos: son estimaciones, no facturación de proveedor.
+/** Cost rates per unit (configurable estimates, not provider billing). */
 export const COST_RATES = {
   whatsappMessage: 0.005,
   voiceMinute: 0.014,
@@ -25,6 +25,12 @@ function usage(value: number | undefined, name: string): number {
 
 function round(value: number): number { return Math.round(value * 1_000_000) / 1_000_000; }
 
+/**
+ * Estimates the cost of attending a citizen report based on channel usage.
+ *
+ * @param input - Usage metrics (WhatsApp messages, voice seconds, transcription seconds)
+ * @returns Cost breakdown in USD
+ */
 export function estimateAttentionCost(input: AttentionUsage): AttentionCost {
   const whatsapp = usage(input.whatsappMessages, "whatsappMessages") * COST_RATES.whatsappMessage;
   const voice = (usage(input.voiceSeconds, "voiceSeconds") / 60) * COST_RATES.voiceMinute;

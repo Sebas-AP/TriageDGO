@@ -27,6 +27,9 @@ triage-dgo-firebase-adminsdk-*.json
 # Logs de agentes (trazabilidad, no versionar por volumen/PII)
 log_agentes.jsonl
 
+# Índices locales regenerables del servicio RAG
+.rag-index/
+
 # Editor / OS
 .DS_Store
 .vscode/*

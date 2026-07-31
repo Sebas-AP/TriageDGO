@@ -11,6 +11,7 @@ const prompts = resolve(process.cwd(), "../agents/prompts");
 type McpServer = { command: string; args: string[] };
 type McpConfig = { mcpServers: Record<string, McpServer> };
 
+/** Input parameters for building a codex CLI invocation. */
 export type CodexInvocationInput = {
   agent: string;
   prompt: string;
@@ -30,6 +31,12 @@ const defaultMcpConfig = (cwd: string): McpConfig => ({
   },
 });
 
+/**
+ * Builds the CLI arguments for invoking codex with an agent.
+ *
+ * @param input - Invocation parameters (agent name, prompt, schema, payload)
+ * @returns Object containing the args array for spawn()
+ */
 export function buildCodexInvocation({ agent, prompt, schemaPath, outputPath, payload, cwd = process.cwd(), mcpConfig }: CodexInvocationInput): { args: string[] } {
   const fullPrompt = `${prompt}\n\nReporte de entrada (JSON):\n${JSON.stringify(payload)}\n\nResponde exclusivamente con JSON que cumpla el esquema indicado.`;
   const args = ["exec", "--ephemeral", "--sandbox", "read-only", "--json", "--model", process.env.CODEX_MODEL ?? "gpt-5.6-luna", "--output-schema", schemaPath];
@@ -61,6 +68,19 @@ async function loadMcpConfig(cwd: string): Promise<McpConfig> {
   return { mcpServers: { reportes: { command, args: args.map((arg) => resolve(cwd, arg)) } } };
 }
 
+/**
+ * Invokes an agent via codex exec CLI.
+ *
+ * Process:
+ * 1. Load agent prompt and schema from files
+ * 2. Build codex invocation with MCP config (for pattern agent)
+ * 3. Spawn codex process, capture stdout/stderr
+ * 4. Parse JSON output, emit trace events
+ *
+ * @param agent - Agent name (classifier, pattern, acuse, evidence, dedup, escalation)
+ * @param payload - Input data for the agent
+ * @param trace - Optional trace observer for observability
+ */
 async function invoke<T>(agent: string, payload: unknown, trace?: AgentTraceObserver): Promise<T> {
   const [prompt, schema] = await Promise.all([readFile(join(prompts, `${agent}.md`), "utf8"), readFile(join(contracts, `${agent}.schema.json`), "utf8")]);
   const cwd = process.cwd();
@@ -110,6 +130,12 @@ function traceCodexEvent(raw: string, emitEvent: (type: "codex.event" | "agent.m
   if (item.type === "agent_message") emitEvent("agent.message", { raw, item });
   if (item.type.includes("mcp")) emitEvent("mcp.tool_call", { raw, item });
 }
+/**
+ * AgentGateway implementation using codex exec CLI.
+ *
+ * Each method invokes the corresponding agent prompt via codex with JSON schema validation.
+ * The pattern agent includes MCP configuration for buscar_similares tool.
+ */
 export const cliAgents: AgentGateway = {
   classifier: (report, trace) => invoke("classifier", report, trace), pattern: (report, trace) => invoke("pattern", report, trace), acuse: (report, trace) => invoke("acuse", report, trace),
   evidence: (report, trace) => invoke("evidence", report, trace), dedup: (report, candidates, trace) => invoke("dedup", { ...report, candidatos_recientes: candidates }, trace),

@@ -2,6 +2,7 @@ import { arbitrate } from "../rules/arbitration.rules";
 import { randomUUID } from "node:crypto";
 import type { AgentLog, AgentOutputs, AgentTraceEventInput, AgentTraceObserver, Report, Ticket, TriageStore, Urgency } from "../types";
 
+/** Gateway interface for invoking reasoning agents. */
 export interface AgentGateway {
   classifier(report: Report, trace?: AgentTraceObserver): Promise<AgentOutputs["classifier"]>;
   pattern(report: Report, trace?: AgentTraceObserver): Promise<AgentOutputs["pattern"]>;
@@ -10,9 +11,23 @@ export interface AgentGateway {
   dedup(report: Report, candidates: unknown[], trace?: AgentTraceObserver): Promise<NonNullable<AgentOutputs["dedup"]>>;
   escalation(ticket: Ticket, school: string, trace?: AgentTraceObserver): Promise<{ debe_escalar: boolean }>;
 }
-export interface GeoGateway { schoolNear(coordinates: [number, number]): Promise<string | undefined>; weatherAggravates(report: Report): Promise<boolean>; }
+
+/** Gateway interface for geolocation services. */
+export interface GeoGateway {
+  schoolNear(coordinates: [number, number]): Promise<string | undefined>;
+  weatherAggravates(report: Report): Promise<boolean>;
+}
+
+/** Callback for sending citizen acknowledgments. */
 export type AcuseSender = (citizenId: string, message: string, ticketId: string) => Promise<void>;
-const fallback = { categoria: "revision_manual" as const, urgencia_base: "alta" as Urgency, area_responsable: "revision_manual", resumen: "Clasificación pendiente", palabras_clave: [] };
+
+const fallback = {
+  categoria: "revision_manual" as const,
+  urgencia_base: "alta" as Urgency,
+  area_responsable: "revision_manual",
+  resumen: "Clasificación pendiente",
+  palabras_clave: []
+};
 
 interface StartedAgentTask {
   agent: string;
@@ -35,8 +50,31 @@ class BufferedTraceObserver implements AgentTraceObserver {
   async flush() { await this.writes; }
 }
 
+/**
+ * Orchestrates parallel execution of reasoning agents and applies arbitration rules.
+ *
+ * Flow:
+ * 1. Launch classifier, pattern, acuse, dedup (and evidence if attachments) in parallel
+ * 2. Wait for all agents with Promise.allSettled (fault-tolerant)
+ * 3. Handle duplicates (link to original if detected)
+ * 4. Apply arbitration rules → final urgency/priority
+ * 5. Create ticket and send acknowledgment
+ * 6. Escalate if critical + near school
+ */
 export class Supervisor {
-  constructor(private readonly store: TriageStore, private readonly agents: AgentGateway, private readonly geo: GeoGateway, private readonly sendAcuse: AcuseSender) {}
+  constructor(
+    private readonly store: TriageStore,
+    private readonly agents: AgentGateway,
+    private readonly geo: GeoGateway,
+    private readonly sendAcuse: AcuseSender
+  ) {}
+
+  /**
+   * Processes a report through the full agent pipeline.
+   *
+   * @param report - The report to process
+   * @returns The created ticket
+   */
   async process(report: Report): Promise<{ ticket: Ticket }> {
     const candidates = await this.store.findRecentCandidates(report);
     const tasks = await Promise.all([
