@@ -30,6 +30,9 @@ log_agentes.jsonl
 # Índices locales regenerables del servicio RAG
 .rag-index/
 
+# Presupuestos mensuales regenerables (salida de calcular_presupuesto_mensual.py)
+rag-service/data/presupuestos_mensuales/
+
 # Editor / OS
 .DS_Store
 .vscode/*

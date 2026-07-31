@@ -44,3 +44,33 @@ emulador (`FIRESTORE_EMULATOR_HOST`) o confirme una instancia remota:
 python3 rag-service/scripts/cargar_dataset_sintetico.py --target firestore
 python3 rag-service/scripts/cargar_dataset_sintetico.py --target firestore --confirm-remote
 ```
+
+## Presupuesto participativo mensual
+
+`Presupuesto_Participativo_Durango.xlsx` es la fuente de zonas, población,
+rezago y techo: el cálculo base reproduce su fórmula `0.40 × población + 0.60
+× rezago`. La prioridad de recaudación se calcula mensualmente a partir de cada
+`clave_catastral` y ajusta el puntaje con peso configurable (15% por defecto),
+normalizado para que la suma siempre sea exactamente el techo mensual.
+
+Los pagos deben ser transacciones en `pagos_predial` con
+`clave_catastral`, `fecha_pago`, `monto_pagado` y `estatus=pagado`; la colección
+`predial` existente sólo conserva el estado actual y no sirve para una suma por
+mes. Para desarrollo hay un archivo de ejemplo sin datos reales.
+
+```bash
+# Calcula y guarda rag-service/data/presupuestos_mensuales/presupuesto-2026-06.json
+python3 rag-service/scripts/calcular_presupuesto_mensual.py \
+  --mes 2026-06 --pagos-jsonl rag-service/data/pagos_predial_ejemplo.jsonl
+
+# Muestra el presupuesto de junio al usar julio como referencia
+python3 rag-service/scripts/mostrar_presupuesto_anterior.py --mes-referencia 2026-07
+```
+
+En operación se puede leer y guardar en Firestore (con credenciales o emulador):
+
+```bash
+python3 rag-service/scripts/calcular_presupuesto_mensual.py --mes 2026-06 \
+  --pagos-firestore --guardar-firestore
+python3 rag-service/scripts/mostrar_presupuesto_anterior.py --mes-referencia 2026-07 --firestore
+```
