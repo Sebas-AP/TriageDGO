@@ -18,7 +18,7 @@ function firmar(url: string, params: Record<string, string>): string {
   return createHmac("sha1", AUTH_TOKEN).update(body).digest("base64");
 }
 
-function buildApp(whisper: WhisperClient = { transcribir: async () => ({ texto: "" }) }) {
+function buildApp(whisper: WhisperClient = { transcribir: async () => ({ texto: "" }) }, descargarMedia?: (url: string) => Promise<{ bytes: Buffer; contentType: string }>) {
   const reports = createFakeReportsRepository();
   const transcription = new TranscriptionService(whisper);
   const app = express();
@@ -29,6 +29,7 @@ function buildApp(whisper: WhisperClient = { transcribir: async () => ({ texto: 
       transcription,
       authToken: AUTH_TOKEN,
       publicBaseUrl: BASE_URL,
+      descargarMedia,
     }),
   );
   return { app, reports };
@@ -61,5 +62,14 @@ describe("POST /webhooks/whatsapp", () => {
     const creados = await reports.listarPorCiudadano("whatsapp:+5216180000000");
     expect(creados).toHaveLength(1);
     expect(creados[0].texto).toBe("Hay un bache enorme");
+  });
+
+  it("does not download a signed but non-Twilio media URL", async () => {
+    const descargarMedia = async () => { throw new Error("must not download"); };
+    const params = { From: "whatsapp:+5216180000000", Body: "", NumMedia: "1", MediaContentType0: "audio/ogg", MediaUrl0: "https://169.254.169.254/latest/meta-data" };
+    const signature = firmar(`${BASE_URL}/webhooks/whatsapp`, params);
+    const { app } = buildApp(undefined, descargarMedia);
+    const response = await request(app).post("/webhooks/whatsapp").set("x-twilio-signature", signature).type("form").send(params);
+    expect(response.status).toBe(400);
   });
 });

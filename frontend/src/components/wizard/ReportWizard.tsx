@@ -29,6 +29,7 @@ export default function ReportWizard() {
   const [step, setStep] = useState(0);
   const stepRef = useRef(step);
   const revisionRef = useRef(0);
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
   const [question, setQuestion] = useState<string | null>(null);
   const [checkingQuestion, setCheckingQuestion] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -96,7 +97,11 @@ export default function ReportWizard() {
   async function submit(data: FormValues) {
     setSubmitError("");
     try {
-      const result = await services.reports.submit({ ...data, location: data.location as LocationValue });
+      const result = await services.reports.submit({
+        ...data,
+        location: data.location as LocationValue,
+        idempotencyKey: idempotencyKeyRef.current,
+      });
       navigate(`/reporte/${result.folio}`, { state: { justSubmitted: true } });
     } catch (cause) {
       setSubmitError(cause instanceof Error ? cause.message : "No pudimos enviar el reporte.");

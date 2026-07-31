@@ -147,6 +147,8 @@ export interface ReportSubmission {
   description: string;
   clarificationAnswer?: string;
   photo?: File;
+  /** Reused by the wizard when a failed submission is retried. Sent only as an HTTP header. */
+  idempotencyKey?: string;
 }
 
 export type AdminEvent =

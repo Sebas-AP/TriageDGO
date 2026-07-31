@@ -22,6 +22,7 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 serviceAccountKey.json
+triage-dgo-firebase-adminsdk-*.json
 
 # Logs de agentes (trazabilidad, no versionar por volumen/PII)
 log_agentes.jsonl

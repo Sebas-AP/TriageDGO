@@ -24,10 +24,18 @@ import type { AdminService, AuthService, MapService, RealtimeService, ReportServ
 
 async function responseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ message: "No fue posible completar la solicitud." }));
-    throw new Error(body.message || `Error HTTP ${response.status}`);
+    const body: unknown = await response.json().catch(() => null);
+    const message =
+      typeof body === "object" && body !== null && "message" in body && typeof body.message === "string"
+        ? body.message
+        : "No fue posible completar la solicitud.";
+    throw new Error(message);
   }
   return response.json() as Promise<T>;
+}
+
+function createIdempotencyKey() {
+  return crypto.randomUUID();
 }
 
 async function authHeaders(): Promise<HeadersInit> {
@@ -53,6 +61,7 @@ const reports: ReportService = {
     return responseJson(
       await fetch(`${config.apiBaseUrl}/reportes/ingesta`, {
         method: "POST",
+        headers: { "Idempotency-Key": input.idempotencyKey || createIdempotencyKey() },
         body: form,
       }),
     );
